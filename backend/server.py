@@ -80,7 +80,7 @@ class UserInDB(User):
 
 # Admin Models
 class AdminLogin(BaseModel):
-    username: str
+    mobile_number: str
     password: str
 
 # Chapter Models
