@@ -978,6 +978,8 @@ const AuthModal = ({ onClose }) => {
                   <option value="10">Class 10</option>
                   <option value="11">Class 11</option>
                   <option value="12">Class 12</option>
+                  <option value="JEE">JEE</option>
+                  <option value="CA Foundation">CA Foundation</option>
                 </select>
               </div>
 
