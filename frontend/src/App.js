@@ -449,8 +449,8 @@ const SampleTestPage = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4 text-primary">Free Sample Test</h1>
-          <p className="text-gray-600 mb-2">Try sample questions without signing up!</p>
-          <p className="text-sm text-gray-500 mb-6">📝 MCQ & Assertion-Reason questions for analysis</p>
+          <p className="text-gray-600 mb-2">Try 10 MCQ questions without signing up!</p>
+          <p className="text-sm text-gray-500 mb-6">📝 Only MCQ questions for quick analysis</p>
           
           {/* Class and Chapter Selection */}
           <div className="bg-white p-6 rounded-xl shadow-lg mb-6 max-w-2xl mx-auto">
