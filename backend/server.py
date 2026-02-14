@@ -52,6 +52,19 @@ class QuestionType(str, Enum):
 
 # ============= MODELS =============
 
+# Subscription Status Enum
+class SubscriptionStatus(str, Enum):
+    FREE = "free"
+    TRIAL = "trial"
+    ACTIVE = "active"
+    EXPIRED = "expired"
+
+# Question Category Enum
+class QuestionCategory(str, Enum):
+    PRACTICE = "practice"
+    TEST = "test"
+    BOTH = "both"
+
 # User Models
 class UserCreate(BaseModel):
     name: str
@@ -79,9 +92,57 @@ class User(BaseModel):
     city: str
     registration_date: str
     is_admin: bool = False
+    # Subscription fields
+    subscription_status: str = "free"
+    subscription_end_date: Optional[str] = None
+    free_chapters_accessed: List[str] = []  # List of chapter_ids accessed for free
+    total_free_chapters_allowed: int = 2  # 2 chapters free after signup
 
 class UserInDB(User):
     password_hash: str
+
+# Coupon Models
+class CouponCreate(BaseModel):
+    code: str
+    discount_percent: int = Field(ge=1, le=100)
+    max_uses: int = 100
+    valid_until: str
+    is_active: bool = True
+
+class Coupon(BaseModel):
+    coupon_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    code: str
+    discount_percent: int
+    max_uses: int
+    used_count: int = 0
+    valid_until: str
+    is_active: bool = True
+    created_at: str
+
+# Subscription Plan Models
+class SubscriptionPlan(BaseModel):
+    plan_id: str
+    name: str
+    price: int
+    duration_days: int
+    features: List[str]
+
+# Payment Models
+class PaymentCreate(BaseModel):
+    plan_id: str
+    coupon_code: Optional[str] = None
+
+class Payment(BaseModel):
+    payment_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    plan_id: str
+    amount: int
+    original_amount: int
+    discount_applied: int = 0
+    coupon_code: Optional[str] = None
+    status: str = "pending"  # pending, completed, failed
+    created_at: str
+    completed_at: Optional[str] = None
 
 # Admin Models
 class AdminLogin(BaseModel):
