@@ -410,9 +410,9 @@ async def get_public_chapters(class_level: Optional[str] = None):
 
 @api_router.get("/sample-questions")
 async def get_sample_questions(class_level: Optional[str] = None, chapter_id: Optional[str] = None):
-    """Get sample questions for guest users (only MCQ and Assertion-Reason for analysis)"""
+    """Get 10 random MCQ questions for guest users (free sample test)"""
     query = {
-        "question_type": {"$in": ["MCQ", "Assertion-Reason"]}  # Only MCQ and Assertion-Reason for analysis
+        "question_type": "MCQ"  # Only MCQ for free sample test
     }
     
     # If specific chapter is requested
@@ -425,15 +425,14 @@ async def get_sample_questions(class_level: Optional[str] = None, chapter_id: Op
             chapter_ids = [ch["chapter_id"] for ch in chapters]
             query["chapter_id"] = {"$in": chapter_ids}
     
-    # Get random 15 questions, sorted by marks and question type
+    # Get random 10 MCQ questions only
     pipeline = [
         {"$match": query},
-        {"$sample": {"size": 15}},
-        {"$sort": {"marks": 1, "question_type": 1}},  # Sort by marks first, then by type
+        {"$sample": {"size": 10}},
         {"$project": {"_id": 0}}
     ]
     
-    questions = await db.questions.aggregate(pipeline).to_list(15)
+    questions = await db.questions.aggregate(pipeline).to_list(10)
     
     # Remove correct answers for sample questions (show only after submission)
     for question in questions:
