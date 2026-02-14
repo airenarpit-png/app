@@ -396,6 +396,16 @@ async def delete_question(question_id: str):
 
 # ============= SAMPLE QUESTIONS (PUBLIC) =============
 
+@api_router.get("/public/chapters")
+async def get_public_chapters(class_level: Optional[str] = None):
+    """Get chapters for guest users (no authentication required)"""
+    query = {}
+    if class_level:
+        query["class_level"] = class_level
+    
+    chapters = await db.chapters.find(query, {"_id": 0}).sort("order", 1).to_list(100)
+    return chapters
+
 @api_router.get("/sample-questions")
 async def get_sample_questions(class_level: Optional[str] = None, chapter_id: Optional[str] = None):
     """Get sample questions for guest users (only MCQ and Assertion-Reason for analysis)"""
