@@ -696,6 +696,33 @@ async def get_all_users():
     ).to_list(1000)
     return users
 
+# ============= IMAGE UPLOAD ROUTE =============
+
+@api_router.post("/upload-image", dependencies=[Depends(get_current_admin)])
+async def upload_image(file: UploadFile = File(...)):
+    """Upload an image and return the URL"""
+    try:
+        # Validate file type
+        if not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File must be an image")
+        
+        # Generate unique filename
+        file_extension = file.filename.split('.')[-1]
+        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+        file_path = Path("/app/backend/uploads") / unique_filename
+        
+        # Save file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Return URL (adjust based on your domain)
+        image_url = f"/uploads/{unique_filename}"
+        return {"url": image_url, "filename": unique_filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading image: {str(e)}")
+    ).to_list(1000)
+    return users
+
 # ============= ROOT ROUTE =============
 
 @api_router.get("/")
