@@ -288,11 +288,11 @@ async def update_class(
 
 @api_router.post("/admin/login")
 async def admin_login(credentials: AdminLogin):
-    user = await db.users.find_one({"username": credentials.username, "is_admin": True})
+    user = await db.users.find_one({"mobile_number": credentials.mobile_number, "is_admin": True})
     if not user or not verify_password(credentials.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid admin credentials")
     
-    token = create_access_token({"user_id": user["user_id"], "username": user["username"]})
+    token = create_access_token({"user_id": user["user_id"], "mobile_number": user["mobile_number"]})
     user.pop("password_hash", None)
     user.pop("_id", None)
     
