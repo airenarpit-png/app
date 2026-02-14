@@ -751,21 +751,21 @@ const ContactPage = () => {
             </div>
 
             <div className="bg-gradient-to-r from-primary to-primary-dark rounded-2xl shadow-xl p-8 text-white">
-              <h3 className="text-2xl font-bold mb-4">Follow Us</h3>
-              <div className="flex space-x-4">
-                <a href="#" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition">
-                  <span className="text-2xl">📘</span>
-                </a>
-                <a href="#" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition">
-                  <span className="text-2xl">📺</span>
-                </a>
-                <a href="#" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition">
-                  <span className="text-2xl">📸</span>
-                </a>
-                <a href="#" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition">
-                  <span className="text-2xl">🐦</span>
-                </a>
-              </div>
+              <h3 className="text-2xl font-bold mb-4">Follow Us on YouTube</h3>
+              <a 
+                href="https://www.youtube.com/@decodemathsnow" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center space-x-3 bg-white/20 hover:bg-white/30 rounded-lg p-4 transition group"
+              >
+                <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">▶️</span>
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-lg group-hover:text-accent transition">Decode Maths Now</div>
+                  <div className="text-sm text-white/80">@decodemathsnow</div>
+                </div>
+              </a>
             </div>
           </div>
         </div>
