@@ -720,8 +720,6 @@ async def upload_image(file: UploadFile = File(...)):
         return {"url": image_url, "filename": unique_filename}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading image: {str(e)}")
-    ).to_list(1000)
-    return users
 
 # ============= ROOT ROUTE =============
 
