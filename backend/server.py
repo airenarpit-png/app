@@ -137,6 +137,29 @@ class ChapterVideo(BaseModel):
     description: Optional[str] = None
     order: int
 
+# Question Report Models
+class QuestionReportCreate(BaseModel):
+    question_id: str
+    report_reason: str
+    description: Optional[str] = None
+
+class QuestionReport(BaseModel):
+    report_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    question_id: str
+    user_id: str
+    report_reason: str
+    description: Optional[str] = None
+    timestamp: str
+    status: str = "pending"  # pending, resolved, rejected
+
+class ChapterVideo(BaseModel):
+    video_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    chapter_id: str
+    title: str
+    youtube_url: str
+    description: Optional[str] = None
+    order: int
+
 # Test Attempt Models
 class TestAttemptCreate(BaseModel):
     chapter_id: str
