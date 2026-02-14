@@ -479,9 +479,11 @@ const SampleTestPage = () => {
               {questions.map((q, index) => (
                 <div key={q.question_id} className="bg-white p-6 rounded-xl shadow-lg">
                   <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-lg font-bold text-primary">Question {index + 1} ({q.question_type} - {q.marks} marks)</h3>
+                    <h3 className="text-lg font-bold text-primary">
+                      Question {index + 1} ({q.question_type} - {q.marks} mark{q.marks > 1 ? 's' : ''})
+                    </h3>
                   </div>
-                  <p className="text-gray-800 mb-4">{q.question_text}</p>
+                  <p className="text-gray-800 mb-4 whitespace-pre-line">{q.question_text}</p>
                   
                   {q.options && (
                     <div className="space-y-2">
