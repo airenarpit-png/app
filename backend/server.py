@@ -372,6 +372,302 @@ async def admin_login(credentials: AdminLogin):
         "user": user
     }
 
+# ============= SUBSCRIPTION PLANS (STATIC) =============
+
+SUBSCRIPTION_PLANS = [
+    {
+        "plan_id": "monthly_499",
+        "name": "Monthly Premium",
+        "price": 499,
+        "duration_days": 30,
+        "features": [
+            "Access to ALL chapters",
+            "Unlimited practice tests",
+            "Chapter-wise tests",
+            "Video solutions",
+            "Progress tracking",
+            "Priority support"
+        ]
+    },
+    {
+        "plan_id": "quarterly_1299",
+        "name": "Quarterly Premium",
+        "price": 1299,
+        "duration_days": 90,
+        "features": [
+            "Access to ALL chapters",
+            "Unlimited practice tests",
+            "Chapter-wise tests",
+            "Video solutions",
+            "Progress tracking",
+            "Priority support",
+            "Save 13%"
+        ]
+    },
+    {
+        "plan_id": "yearly_4999",
+        "name": "Yearly Premium",
+        "price": 4999,
+        "duration_days": 365,
+        "features": [
+            "Access to ALL chapters",
+            "Unlimited practice tests",
+            "Chapter-wise tests",
+            "Video solutions",
+            "Progress tracking",
+            "Priority support",
+            "Save 17%"
+        ]
+    }
+]
+
+# ============= SUBSCRIPTION ROUTES =============
+
+@api_router.get("/subscription/plans")
+async def get_subscription_plans():
+    """Get available subscription plans"""
+    return SUBSCRIPTION_PLANS
+
+@api_router.get("/subscription/status")
+async def get_subscription_status(current_user: dict = Depends(get_current_user)):
+    """Get current user's subscription status"""
+    subscription_status = current_user.get("subscription_status", "free")
+    subscription_end_date = current_user.get("subscription_end_date")
+    free_chapters_accessed = current_user.get("free_chapters_accessed", [])
+    total_free_chapters_allowed = current_user.get("total_free_chapters_allowed", 2)
+    
+    # Check if subscription has expired
+    if subscription_status == "active" and subscription_end_date:
+        end_date = datetime.fromisoformat(subscription_end_date.replace('Z', '+00:00'))
+        if end_date < datetime.now(timezone.utc):
+            # Update status to expired
+            await db.users.update_one(
+                {"user_id": current_user["user_id"]},
+                {"$set": {"subscription_status": "expired"}}
+            )
+            subscription_status = "expired"
+    
+    return {
+        "subscription_status": subscription_status,
+        "subscription_end_date": subscription_end_date,
+        "free_chapters_accessed": free_chapters_accessed,
+        "free_chapters_remaining": max(0, total_free_chapters_allowed - len(free_chapters_accessed)),
+        "is_premium": subscription_status == "active"
+    }
+
+@api_router.post("/subscription/check-access/{chapter_id}")
+async def check_chapter_access(chapter_id: str, current_user: dict = Depends(get_current_user)):
+    """Check if user has access to a specific chapter"""
+    subscription_status = current_user.get("subscription_status", "free")
+    subscription_end_date = current_user.get("subscription_end_date")
+    free_chapters_accessed = current_user.get("free_chapters_accessed", [])
+    total_free_chapters_allowed = current_user.get("total_free_chapters_allowed", 2)
+    
+    # Premium users have full access
+    if subscription_status == "active":
+        if subscription_end_date:
+            end_date = datetime.fromisoformat(subscription_end_date.replace('Z', '+00:00'))
+            if end_date > datetime.now(timezone.utc):
+                return {"has_access": True, "reason": "premium"}
+    
+    # Check free chapter access
+    if chapter_id in free_chapters_accessed:
+        return {"has_access": True, "reason": "free_chapter_previously_accessed"}
+    
+    # Check if user can access new free chapter
+    if len(free_chapters_accessed) < total_free_chapters_allowed:
+        # Grant access and record this chapter
+        await db.users.update_one(
+            {"user_id": current_user["user_id"]},
+            {"$addToSet": {"free_chapters_accessed": chapter_id}}
+        )
+        return {
+            "has_access": True,
+            "reason": "free_chapter_granted",
+            "free_chapters_remaining": total_free_chapters_allowed - len(free_chapters_accessed) - 1
+        }
+    
+    return {
+        "has_access": False,
+        "reason": "subscription_required",
+        "message": "You have used all your free chapters. Please subscribe to continue."
+    }
+
+@api_router.post("/subscription/validate-coupon")
+async def validate_coupon(coupon_code: str, current_user: dict = Depends(get_current_user)):
+    """Validate a coupon code"""
+    coupon = await db.coupons.find_one({"code": coupon_code.upper(), "is_active": True}, {"_id": 0})
+    
+    if not coupon:
+        raise HTTPException(status_code=404, detail="Invalid coupon code")
+    
+    # Check if coupon is expired
+    valid_until = datetime.fromisoformat(coupon["valid_until"].replace('Z', '+00:00'))
+    if valid_until < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Coupon has expired")
+    
+    # Check max uses
+    if coupon["used_count"] >= coupon["max_uses"]:
+        raise HTTPException(status_code=400, detail="Coupon has reached maximum uses")
+    
+    return {
+        "valid": True,
+        "discount_percent": coupon["discount_percent"],
+        "code": coupon["code"]
+    }
+
+@api_router.post("/subscription/initiate-payment")
+async def initiate_payment(payment_data: PaymentCreate, current_user: dict = Depends(get_current_user)):
+    """Initiate a mock payment for subscription"""
+    # Find the plan
+    plan = next((p for p in SUBSCRIPTION_PLANS if p["plan_id"] == payment_data.plan_id), None)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Invalid plan")
+    
+    original_amount = plan["price"]
+    discount = 0
+    
+    # Apply coupon if provided
+    if payment_data.coupon_code:
+        coupon = await db.coupons.find_one({"code": payment_data.coupon_code.upper(), "is_active": True}, {"_id": 0})
+        if coupon:
+            valid_until = datetime.fromisoformat(coupon["valid_until"].replace('Z', '+00:00'))
+            if valid_until > datetime.now(timezone.utc) and coupon["used_count"] < coupon["max_uses"]:
+                discount = int(original_amount * coupon["discount_percent"] / 100)
+    
+    final_amount = original_amount - discount
+    
+    # Create payment record
+    payment = Payment(
+        user_id=current_user["user_id"],
+        plan_id=payment_data.plan_id,
+        amount=final_amount,
+        original_amount=original_amount,
+        discount_applied=discount,
+        coupon_code=payment_data.coupon_code.upper() if payment_data.coupon_code else None,
+        status="pending",
+        created_at=datetime.now(timezone.utc).isoformat()
+    )
+    
+    await db.payments.insert_one(payment.model_dump())
+    
+    return {
+        "payment_id": payment.payment_id,
+        "amount": final_amount,
+        "original_amount": original_amount,
+        "discount": discount,
+        "plan_name": plan["name"],
+        "duration_days": plan["duration_days"]
+    }
+
+@api_router.post("/subscription/complete-payment/{payment_id}")
+async def complete_payment(payment_id: str, current_user: dict = Depends(get_current_user)):
+    """Complete a mock payment (simulates successful payment)"""
+    payment = await db.payments.find_one({"payment_id": payment_id, "user_id": current_user["user_id"]}, {"_id": 0})
+    
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    if payment["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Payment already processed")
+    
+    # Find the plan
+    plan = next((p for p in SUBSCRIPTION_PLANS if p["plan_id"] == payment["plan_id"]), None)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    
+    # Calculate subscription end date
+    subscription_end = datetime.now(timezone.utc) + timedelta(days=plan["duration_days"])
+    
+    # Update payment status
+    await db.payments.update_one(
+        {"payment_id": payment_id},
+        {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Update coupon usage if applicable
+    if payment.get("coupon_code"):
+        await db.coupons.update_one(
+            {"code": payment["coupon_code"]},
+            {"$inc": {"used_count": 1}}
+        )
+    
+    # Update user subscription
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {
+            "subscription_status": "active",
+            "subscription_end_date": subscription_end.isoformat()
+        }}
+    )
+    
+    return {
+        "success": True,
+        "message": "Payment successful! Your subscription is now active.",
+        "subscription_end_date": subscription_end.isoformat(),
+        "plan_name": plan["name"]
+    }
+
+# ============= COUPON ROUTES (ADMIN) =============
+
+@api_router.get("/admin/coupons", dependencies=[Depends(get_current_admin)])
+async def get_coupons():
+    """Get all coupons (admin only)"""
+    coupons = await db.coupons.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return coupons
+
+@api_router.post("/admin/coupons", dependencies=[Depends(get_current_admin)])
+async def create_coupon(coupon_data: CouponCreate):
+    """Create a new coupon (admin only)"""
+    # Check if code already exists
+    existing = await db.coupons.find_one({"code": coupon_data.code.upper()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Coupon code already exists")
+    
+    coupon = Coupon(
+        code=coupon_data.code.upper(),
+        discount_percent=coupon_data.discount_percent,
+        max_uses=coupon_data.max_uses,
+        valid_until=coupon_data.valid_until,
+        is_active=coupon_data.is_active,
+        created_at=datetime.now(timezone.utc).isoformat()
+    )
+    
+    await db.coupons.insert_one(coupon.model_dump())
+    
+    return {"message": "Coupon created successfully", "coupon": coupon.model_dump()}
+
+@api_router.put("/admin/coupons/{coupon_id}", dependencies=[Depends(get_current_admin)])
+async def update_coupon(coupon_id: str, coupon_data: CouponCreate):
+    """Update a coupon (admin only)"""
+    result = await db.coupons.update_one(
+        {"coupon_id": coupon_id},
+        {"$set": {
+            "code": coupon_data.code.upper(),
+            "discount_percent": coupon_data.discount_percent,
+            "max_uses": coupon_data.max_uses,
+            "valid_until": coupon_data.valid_until,
+            "is_active": coupon_data.is_active
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+    return {"message": "Coupon updated successfully"}
+
+@api_router.delete("/admin/coupons/{coupon_id}", dependencies=[Depends(get_current_admin)])
+async def delete_coupon(coupon_id: str):
+    """Delete a coupon (admin only)"""
+    result = await db.coupons.delete_one({"coupon_id": coupon_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+    return {"message": "Coupon deleted successfully"}
+
+@api_router.get("/admin/payments", dependencies=[Depends(get_current_admin)])
+async def get_all_payments():
+    """Get all payments (admin only)"""
+    payments = await db.payments.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return payments
+
 # ============= CHAPTER ROUTES =============
 
 @api_router.get("/chapters")
