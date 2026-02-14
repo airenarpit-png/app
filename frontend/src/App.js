@@ -1238,6 +1238,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LandingPage onAuthClick={() => setShowAuthModal(true)} />} />
             <Route path="/sample-test" element={<SampleTestPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route
