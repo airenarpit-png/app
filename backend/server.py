@@ -397,13 +397,16 @@ async def delete_question(question_id: str):
 # ============= SAMPLE QUESTIONS (PUBLIC) =============
 
 @api_router.get("/sample-questions")
-async def get_sample_questions(class_level: Optional[str] = None):
+async def get_sample_questions(class_level: Optional[str] = None, chapter_id: Optional[str] = None):
     """Get sample questions for guest users (only MCQ and Assertion-Reason for analysis)"""
     query = {
         "question_type": {"$in": ["MCQ", "Assertion-Reason"]}  # Only MCQ and Assertion-Reason for analysis
     }
     
-    if class_level:
+    # If specific chapter is requested
+    if chapter_id:
+        query["chapter_id"] = chapter_id
+    elif class_level:
         # Get chapters for this class
         chapters = await db.chapters.find({"class_level": class_level}, {"_id": 0}).to_list(100)
         if chapters:
@@ -421,6 +424,10 @@ async def get_sample_questions(class_level: Optional[str] = None):
     questions = await db.questions.aggregate(pipeline).to_list(15)
     
     # Remove correct answers for sample questions (show only after submission)
+    for question in questions:
+        question["correct_answer_hidden"] = True
+    
+    return questions
     for question in questions:
         question["correct_answer_hidden"] = True
     
