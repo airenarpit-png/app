@@ -396,8 +396,11 @@ async def delete_question(question_id: str):
 
 @api_router.get("/sample-questions")
 async def get_sample_questions(class_level: Optional[str] = None):
-    """Get 10 random sample questions for guest users (no authentication required)"""
-    query = {}
+    """Get sample questions for guest users (only MCQ and Assertion-Reason for analysis)"""
+    query = {
+        "question_type": {"$in": ["MCQ", "Assertion-Reason"]}  # Only MCQ and Assertion-Reason for analysis
+    }
+    
     if class_level:
         # Get chapters for this class
         chapters = await db.chapters.find({"class_level": class_level}, {"_id": 0}).to_list(100)
@@ -405,14 +408,15 @@ async def get_sample_questions(class_level: Optional[str] = None):
             chapter_ids = [ch["chapter_id"] for ch in chapters]
             query["chapter_id"] = {"$in": chapter_ids}
     
-    # Get random 10 questions
+    # Get random 15 questions, sorted by marks and question type
     pipeline = [
         {"$match": query},
-        {"$sample": {"size": 10}},
+        {"$sample": {"size": 15}},
+        {"$sort": {"marks": 1, "question_type": 1}},  # Sort by marks first, then by type
         {"$project": {"_id": 0}}
     ]
     
-    questions = await db.questions.aggregate(pipeline).to_list(10)
+    questions = await db.questions.aggregate(pipeline).to_list(15)
     
     # Remove correct answers for sample questions (show only after submission)
     for question in questions:
