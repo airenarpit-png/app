@@ -49,20 +49,29 @@ class QuestionType(str, Enum):
 
 # User Models
 class UserCreate(BaseModel):
-    username: str
-    password: str
+    name: str
+    mobile_number: str
     email: EmailStr
+    password: str
     class_level: ClassLevel
+    school_name: str
+    city: str
 
 class UserLogin(BaseModel):
-    username: str
+    mobile_number: str
     password: str
+
+class UserUpdateClass(BaseModel):
+    class_level: ClassLevel
 
 class User(BaseModel):
     user_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    username: str
+    name: str
+    mobile_number: str
     email: str
-    class_level: str
+    class_level: Optional[str] = None
+    school_name: str
+    city: str
     registration_date: str
     is_admin: bool = False
 
