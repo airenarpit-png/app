@@ -406,6 +406,22 @@ async def seed_database():
         {
             "question_id": str(uuid.uuid4()),
             "chapter_id": class12_relations_id,
+            "question_type": "Assertion-Reason",
+            "question_text": "Assertion (A): Every function is a relation.\nReason (R): A relation from set A to set B is a function if every element of A has a unique image in B.",
+            "options": [
+                "Both A and R are true and R is the correct explanation of A",
+                "Both A and R are true but R is not the correct explanation of A",
+                "A is true but R is false",
+                "A is false but R is true"
+            ],
+            "correct_answer": "Both A and R are true but R is not the correct explanation of A",
+            "marks": 1,
+            "youtube_solution_url": "",
+            "explanation": "Both statements are true. A function is a special type of relation, but R defines what makes a relation a function, not why every function is a relation."
+        },
+        {
+            "question_id": str(uuid.uuid4()),
+            "chapter_id": class12_relations_id,
             "question_type": "3M",
             "question_text": "Show that the function f: N → N given by f(x) = 2x is one-one but not onto.",
             "options": None,
