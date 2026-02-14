@@ -191,10 +191,10 @@ async def get_current_admin(current_user: dict = Depends(get_current_user)) -> d
 
 @api_router.post("/auth/register")
 async def register(user_data: UserCreate):
-    # Check if username exists
-    existing_user = await db.users.find_one({"username": user_data.username})
+    # Check if mobile number exists
+    existing_user = await db.users.find_one({"mobile_number": user_data.mobile_number})
     if existing_user:
-        raise HTTPException(status_code=400, detail="Username already exists")
+        raise HTTPException(status_code=400, detail="Mobile number already registered")
     
     # Check if email exists
     existing_email = await db.users.find_one({"email": user_data.email})
@@ -204,9 +204,12 @@ async def register(user_data: UserCreate):
     # Create user
     user = UserInDB(
         user_id=str(uuid.uuid4()),
-        username=user_data.username,
+        name=user_data.name,
+        mobile_number=user_data.mobile_number,
         email=user_data.email,
         class_level=user_data.class_level,
+        school_name=user_data.school_name,
+        city=user_data.city,
         registration_date=datetime.now(timezone.utc).isoformat(),
         is_admin=False,
         password_hash=hash_password(user_data.password)
@@ -215,7 +218,7 @@ async def register(user_data: UserCreate):
     await db.users.insert_one(user.model_dump())
     
     # Create token
-    token = create_access_token({"user_id": user.user_id, "username": user.username})
+    token = create_access_token({"user_id": user.user_id, "mobile_number": user.mobile_number})
     
     return {
         "message": "User registered successfully",
@@ -225,11 +228,11 @@ async def register(user_data: UserCreate):
 
 @api_router.post("/auth/login")
 async def login(credentials: UserLogin):
-    user = await db.users.find_one({"username": credentials.username})
+    user = await db.users.find_one({"mobile_number": credentials.mobile_number})
     if not user or not verify_password(credentials.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401, detail="Invalid mobile number or password")
     
-    token = create_access_token({"user_id": user["user_id"], "username": user["username"]})
+    token = create_access_token({"user_id": user["user_id"], "mobile_number": user["mobile_number"]})
     user.pop("password_hash", None)
     user.pop("_id", None)
     
@@ -242,6 +245,21 @@ async def login(credentials: UserLogin):
 @api_router.get("/auth/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
+
+@api_router.put("/auth/update-class")
+async def update_class(
+    class_data: UserUpdateClass,
+    current_user: dict = Depends(get_current_user)
+):
+    result = await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {"class_level": class_data.class_level}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    current_user["class_level"] = class_data.class_level
+    return {"message": "Class updated successfully", "user": current_user}
 
 # ============= ADMIN ROUTES =============
 
