@@ -22,6 +22,7 @@ export const useAuth = () => {
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -37,6 +38,8 @@ const AuthProvider = ({ children }) => {
     try {
       const response = await axios.get(`${API}/auth/me`);
       setUser(response.data);
+      // Fetch subscription status
+      fetchSubscriptionStatus();
     } catch (error) {
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
@@ -45,11 +48,22 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/subscription/status`);
+      setSubscriptionStatus(response.data);
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+    }
+  };
+
   const login = async (mobile_number, password) => {
     const response = await axios.post(`${API}/auth/login`, { mobile_number, password });
     localStorage.setItem('token', response.data.token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
     setUser(response.data.user);
+    // Fetch subscription status after login
+    setTimeout(fetchSubscriptionStatus, 100);
     return response.data;
   };
 
@@ -58,6 +72,12 @@ const AuthProvider = ({ children }) => {
     localStorage.setItem('token', response.data.token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
     setUser(response.data.user);
+    // New users start with free tier
+    setSubscriptionStatus({
+      subscription_status: 'free',
+      free_chapters_remaining: 2,
+      is_premium: false
+    });
     return response.data;
   };
 
@@ -71,10 +91,24 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
+    setSubscriptionStatus(null);
+  };
+
+  const refreshSubscription = () => {
+    fetchSubscriptionStatus();
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, updateClass }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      register, 
+      logout, 
+      loading, 
+      updateClass,
+      subscriptionStatus,
+      refreshSubscription 
+    }}>
       {children}
     </AuthContext.Provider>
   );
