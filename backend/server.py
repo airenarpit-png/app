@@ -40,6 +40,7 @@ class ClassLevel(str, Enum):
 
 class QuestionType(str, Enum):
     MCQ = "MCQ"
+    ASSERTION_REASON = "Assertion-Reason"
     TWO_MARKS = "2M"
     THREE_MARKS = "3M"
     FIVE_MARKS = "5M"
