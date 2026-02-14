@@ -492,10 +492,6 @@ async def get_chapter_practice(chapter_id: str, current_user: dict = Depends(get
     """Get all questions for chapter practice (authenticated users)"""
     questions = await db.questions.find({"chapter_id": chapter_id}, {"_id": 0}).to_list(1000)
     return questions
-    for question in questions:
-        question["correct_answer_hidden"] = True
-    
-    return questions
 
 # ============= QUESTION REPORT ROUTES =============
 
