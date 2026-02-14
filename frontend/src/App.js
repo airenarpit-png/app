@@ -1182,13 +1182,546 @@ const Dashboard = () => {
   );
 };
 
-// Practice Page Component (Placeholder)
+// Practice Page Component with Practice vs Test selection
 const PracticePage = () => {
+  const { user, subscriptionStatus, refreshSubscription } = useAuth();
+  const [mode, setMode] = useState(null); // 'practice' or 'test'
+  const [chapters, setChapters] = useState([]);
+  const [selectedChapter, setSelectedChapter] = useState('');
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [score, setScore] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+  useEffect(() => {
+    if (user?.class_level) {
+      fetchChapters();
+    }
+  }, [user?.class_level]);
+
+  const fetchChapters = async () => {
+    try {
+      const response = await axios.get(`${API}/chapters?class_level=${user.class_level}`);
+      setChapters(response.data);
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+    }
+  };
+
+  const checkAccessAndFetchQuestions = async () => {
+    if (!selectedChapter) return;
+    
+    setLoading(true);
+    setAccessDenied(false);
+    
+    try {
+      // Check access first
+      const accessResponse = await axios.post(`${API}/subscription/check-access/${selectedChapter}`);
+      
+      if (!accessResponse.data.has_access) {
+        setAccessDenied(true);
+        setLoading(false);
+        return;
+      }
+      
+      // Refresh subscription status
+      refreshSubscription();
+      
+      // Fetch questions based on mode
+      const endpoint = mode === 'test' 
+        ? `${API}/chapter-test/${selectedChapter}`
+        : `${API}/chapter-practice/${selectedChapter}`;
+      
+      const response = await axios.get(endpoint);
+      setQuestions(response.data);
+      setAnswers({});
+      setSubmitted(false);
+      setScore(null);
+      setCurrentQuestionIndex(0);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        setAccessDenied(true);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    // Calculate score
+    let correctCount = 0;
+    let totalMarks = 0;
+    let scoredMarks = 0;
+    
+    questions.forEach(q => {
+      totalMarks += q.marks;
+      if (answers[q.question_id] === q.correct_answer) {
+        correctCount++;
+        scoredMarks += q.marks;
+      }
+    });
+    
+    const percentage = totalMarks > 0 ? Math.round((scoredMarks / totalMarks) * 100) : 0;
+    
+    setScore({
+      correct: correctCount,
+      total: questions.length,
+      percentage,
+      totalMarks,
+      scoredMarks
+    });
+    setSubmitted(true);
+    
+    // Save attempt
+    try {
+      await axios.post(`${API}/test-attempts`, {
+        chapter_id: selectedChapter,
+        questions_answered: questions.map(q => ({
+          question_id: q.question_id,
+          user_answer: answers[q.question_id] || ''
+        }))
+      });
+    } catch (error) {
+      console.error('Error saving attempt:', error);
+    }
+  };
+
+  const resetPractice = () => {
+    setMode(null);
+    setSelectedChapter('');
+    setQuestions([]);
+    setAnswers({});
+    setSubmitted(false);
+    setScore(null);
+    setAccessDenied(false);
+  };
+
+  // Mode Selection Screen
+  if (!mode) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-28 pb-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-4 text-primary">Choose Your Mode</h1>
+            <p className="text-gray-600">Class {user?.class_level} - {user?.name}</p>
+            
+            {/* Subscription Status Banner */}
+            {subscriptionStatus && (
+              <div className={`mt-4 inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+                subscriptionStatus.is_premium 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {subscriptionStatus.is_premium ? (
+                  <>✅ Premium Active</>
+                ) : (
+                  <>📚 Free Plan - {subscriptionStatus.free_chapters_remaining} chapters remaining</>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Practice Mode */}
+            <div 
+              onClick={() => setMode('practice')}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition cursor-pointer transform hover:-translate-y-2 border-t-4 border-blue-500"
+              data-testid="practice-mode-card"
+            >
+              <div className="text-6xl mb-4 text-center">📖</div>
+              <h2 className="text-2xl font-bold mb-4 text-primary text-center">Chapter Practice</h2>
+              <p className="text-gray-600 text-center mb-4">
+                Practice all questions from a chapter at your own pace. Perfect for learning and revision.
+              </p>
+              <ul className="text-sm text-gray-600 space-y-2">
+                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> All question types</li>
+                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> No time limit</li>
+                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Detailed explanations</li>
+                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Video solutions</li>
+              </ul>
+            </div>
+
+            {/* Test Mode */}
+            <div 
+              onClick={() => setMode('test')}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition cursor-pointer transform hover:-translate-y-2 border-t-4 border-accent"
+              data-testid="test-mode-card"
+            >
+              <div className="text-6xl mb-4 text-center">📝</div>
+              <h2 className="text-2xl font-bold mb-4 text-primary text-center">Chapter Test</h2>
+              <p className="text-gray-600 text-center mb-4">
+                Take a structured test with CBSE exam pattern. Test your understanding!
+              </p>
+              <ul className="text-sm text-gray-600 space-y-2">
+                <li className="flex items-center"><span className="text-accent mr-2">✓</span> 5 MCQ Questions</li>
+                <li className="flex items-center"><span className="text-accent mr-2">✓</span> 3 × 2 Marks Questions</li>
+                <li className="flex items-center"><span className="text-accent mr-2">✓</span> 3 × 3 Marks Questions</li>
+                <li className="flex items-center"><span className="text-accent mr-2">✓</span> 2 × 5 Marks Questions</li>
+              </ul>
+            </div>
+          </div>
+
+          {!subscriptionStatus?.is_premium && (
+            <div className="mt-8 bg-gradient-to-r from-accent to-orange-600 text-white p-6 rounded-xl text-center">
+              <h3 className="text-xl font-bold mb-2">Upgrade to Premium!</h3>
+              <p className="mb-4">Get unlimited access to all chapters for just ₹499/month</p>
+              <a 
+                href="/pricing" 
+                className="inline-block px-6 py-3 bg-white text-accent rounded-lg font-bold hover:shadow-lg transition"
+              >
+                View Plans
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Chapter Selection Screen
+  if (!questions.length && !loading && !accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-28 pb-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <button 
+            onClick={resetPractice}
+            className="mb-6 text-primary font-semibold hover:underline flex items-center"
+          >
+            ← Back to Mode Selection
+          </button>
+          
+          <div className="bg-white p-8 rounded-2xl shadow-lg">
+            <h2 className="text-3xl font-bold mb-6 text-primary">
+              {mode === 'test' ? '📝 Chapter Test' : '📖 Chapter Practice'}
+            </h2>
+            
+            <div className="mb-6">
+              <label className="block text-gray-700 font-semibold mb-2">Select Chapter</label>
+              <select
+                value={selectedChapter}
+                onChange={(e) => setSelectedChapter(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+                data-testid="chapter-select"
+              >
+                <option value="">Choose a chapter...</option>
+                {chapters.map((chapter, index) => (
+                  <option key={chapter.chapter_id} value={chapter.chapter_id}>
+                    Chapter {index + 1}: {chapter.chapter_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={checkAccessAndFetchQuestions}
+              disabled={!selectedChapter}
+              className="w-full py-4 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-bold text-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="start-practice-btn"
+            >
+              {mode === 'test' ? 'Start Test' : 'Start Practice'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Access Denied Screen
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-28 pb-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
+            <div className="text-6xl mb-4">🔒</div>
+            <h2 className="text-3xl font-bold mb-4 text-primary">Subscription Required</h2>
+            <p className="text-gray-600 mb-6">
+              You've used all your free chapters. Subscribe to unlock unlimited access to all chapters!
+            </p>
+            <div className="flex justify-center gap-4">
+              <a 
+                href="/pricing" 
+                className="px-8 py-4 bg-gradient-to-r from-accent to-orange-600 text-white rounded-lg font-bold hover:shadow-lg transition"
+              >
+                View Subscription Plans
+              </a>
+              <button
+                onClick={resetPractice}
+                className="px-8 py-4 bg-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-400 transition"
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading Screen
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-28 pb-12 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600 font-semibold">Loading questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Results Screen
+  if (submitted && score) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-28 pb-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
+            <div className="text-6xl mb-4">{score.percentage >= 70 ? '🎉' : score.percentage >= 40 ? '👍' : '📚'}</div>
+            <h2 className="text-3xl font-bold mb-4 text-primary">
+              {score.percentage >= 70 ? 'Excellent!' : score.percentage >= 40 ? 'Good Job!' : 'Keep Practicing!'}
+            </h2>
+            
+            <div className="grid md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-blue-50 p-4 rounded-xl">
+                <div className="text-3xl font-bold text-blue-600">{score.percentage}%</div>
+                <div className="text-gray-600">Score</div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-xl">
+                <div className="text-3xl font-bold text-green-600">{score.correct}/{score.total}</div>
+                <div className="text-gray-600">Correct Answers</div>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-xl">
+                <div className="text-3xl font-bold text-purple-600">{score.scoredMarks}/{score.totalMarks}</div>
+                <div className="text-gray-600">Marks</div>
+              </div>
+            </div>
+
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => {
+                  setSubmitted(false);
+                  setAnswers({});
+                  setCurrentQuestionIndex(0);
+                }}
+                className="px-6 py-3 bg-primary text-white rounded-lg font-bold hover:shadow-lg transition"
+              >
+                Review Answers
+              </button>
+              <button
+                onClick={resetPractice}
+                className="px-6 py-3 bg-accent text-white rounded-lg font-bold hover:shadow-lg transition"
+              >
+                Practice More
+              </button>
+            </div>
+          </div>
+
+          {/* Question Review */}
+          <div className="mt-8 space-y-6">
+            <h3 className="text-2xl font-bold text-primary">Answer Review</h3>
+            {questions.map((q, index) => {
+              const isCorrect = answers[q.question_id] === q.correct_answer;
+              return (
+                <div key={q.question_id} className={`bg-white p-6 rounded-xl shadow-lg border-l-4 ${isCorrect ? 'border-green-500' : 'border-red-500'}`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <h4 className="text-lg font-bold text-primary">
+                      Q{index + 1}. {q.question_type} ({q.marks} marks)
+                    </h4>
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                    </span>
+                  </div>
+                  <p className="text-gray-800 mb-4 whitespace-pre-line">{q.question_text}</p>
+                  
+                  {q.options && (
+                    <div className="space-y-2 mb-4">
+                      {q.options.map((opt, idx) => (
+                        <div 
+                          key={idx}
+                          className={`p-3 rounded-lg ${
+                            opt === q.correct_answer ? 'bg-green-100 border border-green-500' :
+                            opt === answers[q.question_id] && opt !== q.correct_answer ? 'bg-red-100 border border-red-500' :
+                            'bg-gray-50'
+                          }`}
+                        >
+                          {opt}
+                          {opt === q.correct_answer && <span className="ml-2 text-green-600 font-bold">(Correct)</span>}
+                          {opt === answers[q.question_id] && opt !== q.correct_answer && <span className="ml-2 text-red-600 font-bold">(Your answer)</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {!isCorrect && !q.options && (
+                    <div className="bg-green-50 p-4 rounded-lg mb-4">
+                      <p className="font-semibold text-green-800">Correct Answer:</p>
+                      <p className="text-green-700">{q.correct_answer}</p>
+                    </div>
+                  )}
+
+                  {q.explanation && (
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <p className="font-semibold text-blue-800 mb-1">Explanation:</p>
+                      <p className="text-blue-700">{q.explanation}</p>
+                    </div>
+                  )}
+
+                  {q.youtube_solution_url && (
+                    <a 
+                      href={q.youtube_solution_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center mt-3 text-red-600 hover:text-red-700 font-semibold"
+                    >
+                      ▶️ Watch Video Solution
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Practice/Test Screen
+  const currentQuestion = questions[currentQuestionIndex];
+  
   return (
     <div className="min-h-screen bg-gray-50 pt-28 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-4xl font-bold mb-8 text-primary">Practice Page - Coming Soon</h1>
-        <p className="text-gray-600">Select your class and start practicing!</p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="bg-white p-4 rounded-xl shadow-lg mb-6 flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-bold text-primary">
+              {mode === 'test' ? 'Chapter Test' : 'Chapter Practice'}
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Question {currentQuestionIndex + 1} of {questions.length}
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-accent">
+              {Object.keys(answers).length}/{questions.length}
+            </div>
+            <div className="text-gray-600 text-sm">Answered</div>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="bg-gray-200 rounded-full h-2 mb-6">
+          <div 
+            className="bg-primary h-2 rounded-full transition-all duration-300"
+            style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+          ></div>
+        </div>
+
+        {/* Question Card */}
+        <div className="bg-white p-6 rounded-xl shadow-lg mb-6">
+          <div className="flex justify-between items-start mb-4">
+            <span className="px-3 py-1 bg-primary text-white rounded-full text-sm font-bold">
+              {currentQuestion.question_type}
+            </span>
+            <span className="px-3 py-1 bg-accent text-white rounded-full text-sm font-bold">
+              {currentQuestion.marks} marks
+            </span>
+          </div>
+          
+          <p className="text-gray-800 text-lg mb-6 whitespace-pre-line">{currentQuestion.question_text}</p>
+          
+          {currentQuestion.options ? (
+            <div className="space-y-3">
+              {currentQuestion.options.map((option, idx) => (
+                <label
+                  key={idx}
+                  className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition ${
+                    answers[currentQuestion.question_id] === option
+                      ? 'border-primary bg-primary/10'
+                      : 'border-gray-300 hover:border-primary'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={currentQuestion.question_id}
+                    value={option}
+                    checked={answers[currentQuestion.question_id] === option}
+                    onChange={(e) => setAnswers({ ...answers, [currentQuestion.question_id]: e.target.value })}
+                    className="mr-3 w-5 h-5"
+                  />
+                  <span className="font-medium">{option}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <textarea
+              value={answers[currentQuestion.question_id] || ''}
+              onChange={(e) => setAnswers({ ...answers, [currentQuestion.question_id]: e.target.value })}
+              className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none"
+              rows="6"
+              placeholder="Write your answer here..."
+            />
+          )}
+
+          {currentQuestion.special_note && (
+            <div className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+              <p className="text-sm text-yellow-800">📌 {currentQuestion.special_note}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+            disabled={currentQuestionIndex === 0}
+            className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            ← Previous
+          </button>
+
+          {currentQuestionIndex < questions.length - 1 ? (
+            <button
+              onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+              className="px-6 py-3 bg-primary text-white rounded-lg font-bold hover:shadow-lg transition"
+            >
+              Next →
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              className="px-8 py-3 bg-gradient-to-r from-accent to-orange-600 text-white rounded-lg font-bold hover:shadow-lg transition"
+              data-testid="submit-test-btn"
+            >
+              Submit {mode === 'test' ? 'Test' : 'Practice'}
+            </button>
+          )}
+        </div>
+
+        {/* Question Navigator */}
+        <div className="mt-6 bg-white p-4 rounded-xl shadow-lg">
+          <h4 className="font-bold text-gray-700 mb-3">Question Navigator</h4>
+          <div className="flex flex-wrap gap-2">
+            {questions.map((q, idx) => (
+              <button
+                key={q.question_id}
+                onClick={() => setCurrentQuestionIndex(idx)}
+                className={`w-10 h-10 rounded-lg font-bold transition ${
+                  idx === currentQuestionIndex
+                    ? 'bg-primary text-white'
+                    : answers[q.question_id]
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {idx + 1}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
