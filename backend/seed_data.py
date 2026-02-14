@@ -340,6 +340,22 @@ async def seed_database():
         {
             "question_id": str(uuid.uuid4()),
             "chapter_id": class11_sets_id,
+            "question_type": "Assertion-Reason",
+            "question_text": "Assertion (A): If A ⊂ B and B ⊂ C, then A ⊂ C.\nReason (R): The subset relation is transitive.",
+            "options": [
+                "Both A and R are true and R is the correct explanation of A",
+                "Both A and R are true but R is not the correct explanation of A",
+                "A is true but R is false",
+                "A is false but R is true"
+            ],
+            "correct_answer": "Both A and R are true and R is the correct explanation of A",
+            "marks": 1,
+            "youtube_solution_url": "",
+            "explanation": "The subset relation is indeed transitive, which directly explains why A ⊂ C."
+        },
+        {
+            "question_id": str(uuid.uuid4()),
+            "chapter_id": class11_sets_id,
             "question_type": "2M",
             "question_text": "If U = {1, 2, 3, 4, 5, 6, 7, 8, 9} and A = {2, 4, 6, 8}, find A'.",
             "options": None,
