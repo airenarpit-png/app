@@ -859,6 +859,374 @@ const ContactPage = () => {
   );
 };
 
+// Pricing Page with Mock Payment Flow
+const PricingPage = () => {
+  const { user, subscriptionStatus, refreshSubscription } = useAuth();
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponStatus, setCouponStatus] = useState(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const fetchPlans = async () => {
+    try {
+      const response = await axios.get(`${API}/subscription/plans`);
+      setPlans(response.data);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) return;
+    
+    try {
+      const response = await axios.post(`${API}/subscription/validate-coupon?coupon_code=${couponCode}`);
+      setCouponStatus({ valid: true, discount: response.data.discount_percent });
+    } catch (error) {
+      setCouponStatus({ valid: false, message: error.response?.data?.detail || 'Invalid coupon' });
+    }
+  };
+
+  const handlePayment = async (plan) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    setSelectedPlan(plan);
+  };
+
+  const processPayment = async () => {
+    if (!selectedPlan) return;
+    
+    setProcessingPayment(true);
+    
+    try {
+      // Initiate payment
+      const initResponse = await axios.post(`${API}/subscription/initiate-payment`, {
+        plan_id: selectedPlan.plan_id,
+        coupon_code: couponStatus?.valid ? couponCode : null
+      });
+      
+      // Simulate payment processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Complete payment (mock)
+      const completeResponse = await axios.post(`${API}/subscription/complete-payment/${initResponse.data.payment_id}`);
+      
+      setPaymentSuccess(true);
+      refreshSubscription();
+    } catch (error) {
+      alert('Payment failed: ' + (error.response?.data?.detail || 'Please try again'));
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
+  const calculatePrice = (plan) => {
+    if (couponStatus?.valid) {
+      const discount = Math.round(plan.price * couponStatus.discount / 100);
+      return plan.price - discount;
+    }
+    return plan.price;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-28 pb-12 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Payment Success Screen
+  if (paymentSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-28 pb-12">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
+            <div className="text-6xl mb-4">🎉</div>
+            <h2 className="text-3xl font-bold mb-4 text-primary">Payment Successful!</h2>
+            <p className="text-gray-600 mb-6">
+              Congratulations! Your premium subscription is now active. You have unlimited access to all chapters.
+            </p>
+            <div className="bg-green-50 border border-green-200 p-4 rounded-lg mb-6">
+              <p className="text-green-800 font-semibold">✅ {selectedPlan?.name} - ₹{calculatePrice(selectedPlan)}</p>
+            </div>
+            <a 
+              href="/practice" 
+              className="inline-block px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-bold hover:shadow-lg transition"
+            >
+              Start Learning Now
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mock Payment Checkout Modal
+  if (selectedPlan && !paymentSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-28 pb-12">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <button 
+            onClick={() => setSelectedPlan(null)}
+            className="mb-6 text-primary font-semibold hover:underline flex items-center"
+          >
+            ← Back to Plans
+          </button>
+          
+          <div className="bg-white p-8 rounded-2xl shadow-lg">
+            <h2 className="text-2xl font-bold mb-6 text-primary">Complete Your Purchase</h2>
+            
+            {/* Plan Summary */}
+            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold text-lg">{selectedPlan.name}</h3>
+                  <p className="text-gray-600 text-sm">{selectedPlan.duration_days} days access</p>
+                </div>
+                <div className="text-right">
+                  {couponStatus?.valid && (
+                    <p className="text-sm text-gray-500 line-through">₹{selectedPlan.price}</p>
+                  )}
+                  <p className="text-2xl font-bold text-primary">₹{calculatePrice(selectedPlan)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Coupon Input */}
+            <div className="mb-6">
+              <label className="block text-gray-700 font-semibold mb-2">Have a coupon code?</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="Enter coupon code"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  data-testid="coupon-input"
+                />
+                <button
+                  onClick={validateCoupon}
+                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
+                >
+                  Apply
+                </button>
+              </div>
+              {couponStatus && (
+                <p className={`mt-2 text-sm ${couponStatus.valid ? 'text-green-600' : 'text-red-600'}`}>
+                  {couponStatus.valid ? `✓ ${couponStatus.discount}% discount applied!` : `✗ ${couponStatus.message}`}
+                </p>
+              )}
+            </div>
+
+            {/* Mock Payment Form */}
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
+              <p className="text-blue-800 text-sm font-semibold mb-2">🔒 DEMO MODE - Mock Payment</p>
+              <p className="text-blue-700 text-sm">
+                This is a demonstration. Click "Pay Now" to simulate a successful payment.
+              </p>
+            </div>
+
+            {/* Payment Details (Mock) */}
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Card Number</label>
+                <input
+                  type="text"
+                  value="4242 4242 4242 4242"
+                  disabled
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Expiry</label>
+                  <input
+                    type="text"
+                    value="12/28"
+                    disabled
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">CVV</label>
+                  <input
+                    type="text"
+                    value="123"
+                    disabled
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={processPayment}
+              disabled={processingPayment}
+              className="w-full py-4 bg-gradient-to-r from-accent to-orange-600 text-white rounded-lg font-bold text-lg hover:shadow-lg transition disabled:opacity-50"
+              data-testid="pay-now-btn"
+            >
+              {processingPayment ? (
+                <span className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Processing Payment...
+                </span>
+              ) : (
+                `Pay ₹${calculatePrice(selectedPlan)} Now`
+              )}
+            </button>
+
+            <p className="text-center text-gray-500 text-sm mt-4">
+              Secure payment powered by Decode Maths (Demo)
+            </p>
+          </div>
+        </div>
+        
+        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 pt-28 pb-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold mb-4 text-primary">Choose Your Plan</h1>
+          <div className="w-24 h-1 bg-accent mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Unlock unlimited access to all chapters and features</p>
+          
+          {/* Current Subscription Status */}
+          {user && subscriptionStatus && (
+            <div className={`mt-6 inline-flex items-center px-6 py-3 rounded-full text-sm font-bold ${
+              subscriptionStatus.is_premium 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-yellow-100 text-yellow-800'
+            }`}>
+              {subscriptionStatus.is_premium ? (
+                <>✅ You are a Premium Member! Subscription active until {new Date(subscriptionStatus.subscription_end_date).toLocaleDateString()}</>
+              ) : (
+                <>📚 Free Plan - {subscriptionStatus.free_chapters_remaining} free chapters remaining</>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Pricing Cards */}
+        <div className="grid md:grid-cols-3 gap-8">
+          {plans.map((plan, index) => {
+            const isPopular = index === 1; // Quarterly is most popular
+            return (
+              <div 
+                key={plan.plan_id}
+                className={`bg-white rounded-2xl shadow-xl overflow-hidden transform transition hover:-translate-y-2 ${
+                  isPopular ? 'ring-4 ring-accent scale-105' : ''
+                }`}
+              >
+                {isPopular && (
+                  <div className="bg-accent text-white text-center py-2 font-bold">
+                    MOST POPULAR
+                  </div>
+                )}
+                <div className="p-8">
+                  <h3 className="text-2xl font-bold mb-2 text-primary">{plan.name}</h3>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-accent">₹{plan.price}</span>
+                    <span className="text-gray-600">/{plan.duration_days} days</span>
+                  </div>
+                  
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-center text-gray-700">
+                        <span className="text-green-500 mr-2">✓</span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <button
+                    onClick={() => handlePayment(plan)}
+                    disabled={subscriptionStatus?.is_premium}
+                    className={`w-full py-4 rounded-lg font-bold text-lg transition ${
+                      subscriptionStatus?.is_premium
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : isPopular
+                        ? 'bg-gradient-to-r from-accent to-orange-600 text-white hover:shadow-lg'
+                        : 'bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-lg'
+                    }`}
+                    data-testid={`select-plan-${plan.plan_id}`}
+                  >
+                    {subscriptionStatus?.is_premium ? 'Already Premium' : 'Choose Plan'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Free Tier Info */}
+        <div className="mt-12 bg-white p-8 rounded-2xl shadow-lg">
+          <h3 className="text-2xl font-bold mb-4 text-primary text-center">Free Plan Features</h3>
+          <div className="grid md:grid-cols-3 gap-6 text-center">
+            <div className="p-4">
+              <div className="text-4xl mb-2">📚</div>
+              <h4 className="font-bold text-lg mb-2">2 Free Chapters</h4>
+              <p className="text-gray-600">Access any 2 chapters of your choice completely free</p>
+            </div>
+            <div className="p-4">
+              <div className="text-4xl mb-2">📝</div>
+              <h4 className="font-bold text-lg mb-2">Sample Tests</h4>
+              <p className="text-gray-600">Unlimited access to free sample tests with 10 MCQs</p>
+            </div>
+            <div className="p-4">
+              <div className="text-4xl mb-2">📊</div>
+              <h4 className="font-bold text-lg mb-2">Progress Tracking</h4>
+              <p className="text-gray-600">Track your learning progress and test scores</p>
+            </div>
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-12">
+          <h3 className="text-2xl font-bold mb-6 text-primary text-center">Frequently Asked Questions</h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h4 className="font-bold text-lg mb-2 text-primary">How does the free plan work?</h4>
+              <p className="text-gray-600">After signing up, you can access any 2 chapters completely free. Once you've used your free chapters, you'll need to subscribe for unlimited access.</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h4 className="font-bold text-lg mb-2 text-primary">Can I cancel my subscription?</h4>
+              <p className="text-gray-600">Yes, you can cancel anytime. Your access will continue until the end of your billing period.</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h4 className="font-bold text-lg mb-2 text-primary">What payment methods do you accept?</h4>
+              <p className="text-gray-600">We accept all major credit/debit cards, UPI, and net banking through our secure payment gateway.</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h4 className="font-bold text-lg mb-2 text-primary">Do you offer refunds?</h4>
+              <p className="text-gray-600">If you're not satisfied within 7 days of purchase, contact us for a full refund.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+    </div>
+  );
+};
+
 export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
