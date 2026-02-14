@@ -37,6 +37,8 @@ class ClassLevel(str, Enum):
     CLASS_10 = "10"
     CLASS_11 = "11"
     CLASS_12 = "12"
+    JEE = "JEE"
+    CA_FOUNDATION = "CA Foundation"
 
 class QuestionType(str, Enum):
     MCQ = "MCQ"
