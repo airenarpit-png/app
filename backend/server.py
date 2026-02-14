@@ -220,15 +220,7 @@ class QuestionReport(BaseModel):
     report_reason: str
     description: Optional[str] = None
     timestamp: str
-    status: str = "pending"  # pending, resolved, rejected
-
-class ChapterVideo(BaseModel):
-    video_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    chapter_id: str
-    title: str
-    youtube_url: str
-    description: Optional[str] = None
-    order: int
+    report_status: str = "pending"  # pending, resolved, rejected
 
 # Test Attempt Models
 class TestAttemptCreate(BaseModel):
