@@ -390,18 +390,39 @@ const SampleTestPage = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState('10');
+  const [chapters, setChapters] = useState([]);
+  const [selectedChapter, setSelectedChapter] = useState('');
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
 
   useEffect(() => {
-    fetchSampleQuestions();
+    fetchChapters();
   }, [selectedClass]);
+
+  useEffect(() => {
+    if (selectedChapter) {
+      fetchSampleQuestions();
+    }
+  }, [selectedChapter]);
+
+  const fetchChapters = async () => {
+    try {
+      const response = await axios.get(`${API}/public/chapters?class_level=${selectedClass}`);
+      setChapters(response.data);
+      setSelectedChapter('');
+      setQuestions([]);
+      setAnswers({});
+      setSubmitted(false);
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+    }
+  };
 
   const fetchSampleQuestions = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API}/sample-questions?class_level=${selectedClass}`);
+      const response = await axios.get(`${API}/sample-questions?chapter_id=${selectedChapter}`);
       setQuestions(response.data);
       setAnswers({});
       setSubmitted(false);
@@ -424,38 +445,59 @@ const SampleTestPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+    <div className="min-h-screen bg-gray-50 pt-28 pb-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4 text-primary">Free Sample Test</h1>
           <p className="text-gray-600 mb-2">Try sample questions without signing up!</p>
           <p className="text-sm text-gray-500 mb-6">📝 MCQ & Assertion-Reason questions for analysis</p>
           
-          <div className="flex justify-center gap-4 mb-6">
-            <button
-              onClick={() => setSelectedClass('10')}
-              className={`px-6 py-2 rounded-lg font-semibold transition ${
-                selectedClass === '10' ? 'bg-primary text-white' : 'bg-white text-primary border-2 border-primary'
-              }`}
-            >
-              Class 10
-            </button>
-            <button
-              onClick={() => setSelectedClass('11')}
-              className={`px-6 py-2 rounded-lg font-semibold transition ${
-                selectedClass === '11' ? 'bg-primary text-white' : 'bg-white text-primary border-2 border-primary'
-              }`}
-            >
-              Class 11
-            </button>
-            <button
-              onClick={() => setSelectedClass('12')}
-              className={`px-6 py-2 rounded-lg font-semibold transition ${
-                selectedClass === '12' ? 'bg-primary text-white' : 'bg-white text-primary border-2 border-primary'
-              }`}
-            >
-              Class 12
-            </button>
+          {/* Class and Chapter Selection */}
+          <div className="bg-white p-6 rounded-xl shadow-lg mb-6 max-w-2xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-left text-gray-700 font-semibold mb-2">Select Class</label>
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                >
+                  <option value="10">Class 10</option>
+                  <option value="11">Class 11</option>
+                  <option value="12">Class 12</option>
+                  <option value="JEE">JEE</option>
+                  <option value="CA Foundation">CA Foundation</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-left text-gray-700 font-semibold mb-2">Select Chapter</label>
+                <select
+                  value={selectedChapter}
+                  onChange={(e) => setSelectedChapter(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                  disabled={chapters.length === 0}
+                >
+                  <option value="">Choose a chapter...</option>
+                  {chapters.map((chapter, index) => (
+                    <option key={chapter.chapter_id} value={chapter.chapter_id}>
+                      Chapter {index + 1}: {chapter.chapter_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {!selectedChapter && (
+              <p className="text-sm text-gray-500 mt-4">👆 Please select a chapter to start the test</p>
+            )}
+          </div>
+
+          {/* Login CTA */}
+          <div className="bg-gradient-to-r from-accent to-orange-600 text-white p-4 rounded-lg mb-6 max-w-2xl mx-auto">
+            <p className="font-bold text-lg mb-2">🎓 Want More Practice Questions?</p>
+            <p className="text-sm mb-3">Login or Sign up to access complete chapter-wise practice with video solutions!</p>
+            <a href="/" className="inline-block px-6 py-2 bg-white text-accent rounded-lg font-bold hover:shadow-lg transition">
+              Login / Sign Up Now
+            </a>
           </div>
         </div>
 
