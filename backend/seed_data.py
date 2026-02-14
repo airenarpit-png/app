@@ -141,6 +141,39 @@ async def seed_database():
             "youtube_solution_url": "",
             "explanation": "Using Euclid's division algorithm, HCF(96, 404) = 4"
         },
+        # Assertion-Reason Questions
+        {
+            "question_id": str(uuid.uuid4()),
+            "chapter_id": class10_realnumbers_id,
+            "question_type": "Assertion-Reason",
+            "question_text": "Assertion (A): The sum of two irrational numbers is always irrational.\nReason (R): √2 + √3 is an irrational number.",
+            "options": [
+                "Both A and R are true and R is the correct explanation of A",
+                "Both A and R are true but R is not the correct explanation of A",
+                "A is true but R is false",
+                "A is false but R is true"
+            ],
+            "correct_answer": "A is false but R is true",
+            "marks": 1,
+            "youtube_solution_url": "",
+            "explanation": "The sum of two irrational numbers can be rational (e.g., √2 + (-√2) = 0). However, √2 + √3 is indeed irrational."
+        },
+        {
+            "question_id": str(uuid.uuid4()),
+            "chapter_id": class10_realnumbers_id,
+            "question_type": "Assertion-Reason",
+            "question_text": "Assertion (A): Every natural number is a whole number.\nReason (R): Whole numbers start from 0.",
+            "options": [
+                "Both A and R are true and R is the correct explanation of A",
+                "Both A and R are true but R is not the correct explanation of A",
+                "A is true but R is false",
+                "A is false but R is true"
+            ],
+            "correct_answer": "Both A and R are true but R is not the correct explanation of A",
+            "marks": 1,
+            "youtube_solution_url": "",
+            "explanation": "Natural numbers (1,2,3...) are subset of whole numbers (0,1,2,3...). Both statements are true but R doesn't explain A."
+        },
         # 2 Marks Questions
         {
             "question_id": str(uuid.uuid4()),
