@@ -112,6 +112,7 @@ class QuestionCreate(BaseModel):
     marks: int
     youtube_solution_url: Optional[str] = None
     explanation: Optional[str] = None
+    special_note: Optional[str] = None
 
 class Question(BaseModel):
     question_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -123,6 +124,7 @@ class Question(BaseModel):
     marks: int
     youtube_solution_url: Optional[str] = None
     explanation: Optional[str] = None
+    special_note: Optional[str] = None
 
 # Chapter Video Models
 class ChapterVideoCreate(BaseModel):
