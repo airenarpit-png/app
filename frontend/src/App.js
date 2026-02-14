@@ -6,7 +6,6 @@ import './App.css';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const LOGO_URL = 'https://customer-assets.emergentagent.com/job_math-decoder/artifacts/l8340fyy_Logo.png';
-const BANNER_URL = 'https://customer-assets.emergentagent.com/job_math-decoder/artifacts/cz2vzotd_youtube_banner_centered_bg.png';
 
 // Create Auth Context
 const AuthContext = createContext(null);
@@ -46,8 +45,8 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (username, password) => {
-    const response = await axios.post(`${API}/auth/login`, { username, password });
+  const login = async (mobile_number, password) => {
+    const response = await axios.post(`${API}/auth/login`, { mobile_number, password });
     localStorage.setItem('token', response.data.token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
     setUser(response.data.user);
@@ -62,6 +61,12 @@ const AuthProvider = ({ children }) => {
     return response.data;
   };
 
+  const updateClass = async (class_level) => {
+    const response = await axios.put(`${API}/auth/update-class`, { class_level });
+    setUser(response.data.user);
+    return response.data;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
@@ -69,7 +74,7 @@ const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, updateClass }}>
       {children}
     </AuthContext.Provider>
   );
@@ -121,17 +126,16 @@ const Navbar = ({ onAuthClick }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <a href="/" className="flex items-center space-x-3">
-            <img src={LOGO_URL} alt="Arpit Sir Maths" className="h-14 w-auto" />
-            <div className="hidden sm:block">
-              <div className="text-xl font-bold text-primary">ARPIT SIR</div>
-              <div className="text-sm font-semibold text-accent">MATHS</div>
-            </div>
+            <img src={LOGO_URL} alt="Decode Maths Logo" className="h-14 w-auto" />
           </a>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
             <a href="/" className="text-gray-700 hover:text-primary font-semibold transition">
               Home
+            </a>
+            <a href="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition">
+              Free Sample Test
             </a>
             <a href="/about" className="text-gray-700 hover:text-primary font-semibold transition">
               About
@@ -160,7 +164,7 @@ const Navbar = ({ onAuthClick }) => {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
-                <span className="text-gray-700 font-semibold">Hi, {user.username}!</span>
+                <span className="text-gray-700 font-semibold">Hi, {user.name}!</span>
                 <button
                   onClick={logout}
                   className="px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-semibold"
@@ -201,6 +205,9 @@ const Navbar = ({ onAuthClick }) => {
             <div className="flex flex-col space-y-3">
               <a href="/" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Home
+              </a>
+              <a href="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+                Free Sample Test
               </a>
               <a href="/about" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 About
@@ -245,14 +252,14 @@ const Navbar = ({ onAuthClick }) => {
 const LandingPage = ({ onAuthClick }) => {
   return (
     <div className="min-h-screen">
-      {/* Hero Section with Banner Style */}
+      {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-primary">
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-primary-darker opacity-95"></div>
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMDUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20"></div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="mb-8 animate-fade-in">
-            <img src={LOGO_URL} alt="Arpit Sir Maths" className="h-32 w-auto mx-auto mb-6" />
+            <img src={LOGO_URL} alt="Logo" className="h-32 w-auto mx-auto mb-6" />
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-4 animate-fade-in">
             DECODE MATHS
@@ -275,10 +282,10 @@ const LandingPage = ({ onAuthClick }) => {
               Start Learning Free
             </button>
             <a
-              href="#features"
+              href="/sample-test"
               className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white hover:text-primary transition"
             >
-              Explore Features
+              Try Sample Test
             </a>
           </div>
         </div>
@@ -288,7 +295,7 @@ const LandingPage = ({ onAuthClick }) => {
       <section id="features" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center mb-4 text-primary">
-            Why Choose Arpit Sir Maths?
+            Why Choose Decode Maths?
           </h2>
           <p className="text-center text-gray-600 mb-12 text-lg">Master CBSE Mathematics with Expert Guidance</p>
           <div className="grid md:grid-cols-3 gap-8">
@@ -345,7 +352,7 @@ const LandingPage = ({ onAuthClick }) => {
             Ready to Excel in Mathematics?
           </h2>
           <p className="text-xl text-white mb-8">
-            Join thousands of students mastering CBSE Mathematics with Arpit Sir
+            Join thousands of students mastering CBSE Mathematics
           </p>
           <button
             onClick={onAuthClick}
@@ -360,19 +367,188 @@ const LandingPage = ({ onAuthClick }) => {
       {/* Footer */}
       <footer className="bg-primary-darker text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <img src={LOGO_URL} alt="Arpit Sir Maths" className="h-16 w-auto mx-auto mb-4" />
+          <img src={LOGO_URL} alt="Logo" className="h-16 w-auto mx-auto mb-4" />
           <p className="text-gray-300 mb-4">
-            Decode Maths Now - Master CBSE Mathematics with Expert Guidance
+            Decode Maths - Master CBSE Mathematics with Expert Guidance
           </p>
           <div className="flex justify-center space-x-6 mb-4">
             <a href="/about" className="text-gray-300 hover:text-accent transition">About</a>
             <a href="/contact" className="text-gray-300 hover:text-accent transition">Contact</a>
+            <a href="/sample-test" className="text-gray-300 hover:text-accent transition">Sample Test</a>
           </div>
           <p className="text-gray-400 text-sm">
-            © 2024 Arpit Sir Maths. All rights reserved.
+            © 2024 Decode Maths. All rights reserved.
           </p>
         </div>
       </footer>
+    </div>
+  );
+};
+
+// Sample Test Page (No login required)
+const SampleTestPage = () => {
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedClass, setSelectedClass] = useState('10');
+  const [answers, setAnswers] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    fetchSampleQuestions();
+  }, [selectedClass]);
+
+  const fetchSampleQuestions = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API}/sample-questions?class_level=${selectedClass}`);
+      setQuestions(response.data);
+      setAnswers({});
+      setSubmitted(false);
+    } catch (error) {
+      console.error('Error fetching sample questions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    let correct = 0;
+    questions.forEach(q => {
+      if (answers[q.question_id] === q.correct_answer) {
+        correct++;
+      }
+    });
+    setScore(correct);
+    setSubmitted(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-4 text-primary">Free Sample Test</h1>
+          <p className="text-gray-600 mb-6">Try 10 questions without signing up!</p>
+          
+          <div className="flex justify-center gap-4 mb-6">
+            <button
+              onClick={() => setSelectedClass('10')}
+              className={`px-6 py-2 rounded-lg font-semibold transition ${
+                selectedClass === '10' ? 'bg-primary text-white' : 'bg-white text-primary border-2 border-primary'
+              }`}
+            >
+              Class 10
+            </button>
+            <button
+              onClick={() => setSelectedClass('11')}
+              className={`px-6 py-2 rounded-lg font-semibold transition ${
+                selectedClass === '11' ? 'bg-primary text-white' : 'bg-white text-primary border-2 border-primary'
+              }`}
+            >
+              Class 11
+            </button>
+            <button
+              onClick={() => setSelectedClass('12')}
+              className={`px-6 py-2 rounded-lg font-semibold transition ${
+                selectedClass === '12' ? 'bg-primary text-white' : 'bg-white text-primary border-2 border-primary'
+              }`}
+            >
+              Class 12
+            </button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
+            {submitted && (
+              <div className="bg-green-100 border-2 border-green-500 text-green-800 p-6 rounded-xl mb-6 text-center">
+                <div className="text-3xl font-bold mb-2">Score: {score} / {questions.length}</div>
+                <p className="text-lg">Great job! Sign up to access more questions and track your progress.</p>
+                <a href="/" className="inline-block mt-4 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
+                  Sign Up Now
+                </a>
+              </div>
+            )}
+
+            <div className="space-y-6">
+              {questions.map((q, index) => (
+                <div key={q.question_id} className="bg-white p-6 rounded-xl shadow-lg">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-bold text-primary">Question {index + 1} ({q.question_type} - {q.marks} marks)</h3>
+                  </div>
+                  <p className="text-gray-800 mb-4">{q.question_text}</p>
+                  
+                  {q.options && (
+                    <div className="space-y-2">
+                      {q.options.map((option, idx) => (
+                        <label
+                          key={idx}
+                          className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition ${
+                            answers[q.question_id] === option
+                              ? 'border-primary bg-primary/10'
+                              : 'border-gray-300 hover:border-primary'
+                          } ${
+                            submitted && option === q.correct_answer
+                              ? 'bg-green-100 border-green-500'
+                              : submitted && answers[q.question_id] === option && option !== q.correct_answer
+                              ? 'bg-red-100 border-red-500'
+                              : ''
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={q.question_id}
+                            value={option}
+                            checked={answers[q.question_id] === option}
+                            onChange={(e) => setAnswers({ ...answers, [q.question_id]: e.target.value })}
+                            disabled={submitted}
+                            className="mr-3"
+                          />
+                          <span className="font-medium">{option}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  {!q.options && (
+                    <textarea
+                      value={answers[q.question_id] || ''}
+                      onChange={(e) => setAnswers({ ...answers, [q.question_id]: e.target.value })}
+                      disabled={submitted}
+                      className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none"
+                      rows="4"
+                      placeholder="Write your answer here..."
+                    />
+                  )}
+
+                  {submitted && q.explanation && (
+                    <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                      <p className="text-sm font-semibold text-blue-900 mb-1">Explanation:</p>
+                      <p className="text-sm text-blue-800">{q.explanation}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {!submitted && questions.length > 0 && (
+              <div className="mt-8 text-center">
+                <button
+                  onClick={handleSubmit}
+                  className="px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-bold text-lg hover:shadow-lg transition"
+                  data-testid="submit-sample-test"
+                >
+                  Submit Test
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -383,15 +559,15 @@ const AboutPage = () => {
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <img src={LOGO_URL} alt="Arpit Sir Maths" className="h-24 w-auto mx-auto mb-6" />
-          <h1 className="text-5xl font-bold mb-4 text-primary">About Arpit Sir Maths</h1>
+          <img src={LOGO_URL} alt="Logo" className="h-24 w-auto mx-auto mb-6" />
+          <h1 className="text-5xl font-bold mb-4 text-primary">About Decode Maths</h1>
           <div className="w-24 h-1 bg-accent mx-auto mb-6"></div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 mb-8">
           <h2 className="text-3xl font-bold mb-6 text-primary">Our Mission</h2>
           <p className="text-gray-700 text-lg leading-relaxed mb-6">
-            At <span className="font-bold text-primary">Decode Maths Now</span>, our mission is to make mathematics accessible, 
+            At <span className="font-bold text-primary">Decode Maths</span>, our mission is to make mathematics accessible, 
             understandable, and enjoyable for every student. We believe that with the right guidance and practice, 
             any student can master mathematics and achieve excellence in their academic journey.
           </p>
@@ -469,7 +645,6 @@ const ContactPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Here you would typically send the form data to your backend
     console.log('Form submitted:', formData);
     setSubmitted(true);
     setTimeout(() => {
@@ -557,7 +732,6 @@ const ContactPage = () => {
                 <div className="text-4xl">📧</div>
                 <div>
                   <h3 className="text-xl font-bold mb-2 text-primary">Email</h3>
-                  <p className="text-gray-600">contact@arpitsirmaths.com</p>
                   <p className="text-gray-600">support@decodemathsnow.com</p>
                 </div>
               </div>
@@ -565,22 +739,13 @@ const ContactPage = () => {
 
             <div className="bg-white rounded-2xl shadow-xl p-8">
               <div className="flex items-start space-x-4">
-                <div className="text-4xl">📱</div>
+                <div className="text-4xl">💬</div>
                 <div>
-                  <h3 className="text-xl font-bold mb-2 text-primary">Phone</h3>
-                  <p className="text-gray-600">+91 98765 43210</p>
-                  <p className="text-gray-600">Mon-Sat: 9:00 AM - 8:00 PM</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div className="flex items-start space-x-4">
-                <div className="text-4xl">📍</div>
-                <div>
-                  <h3 className="text-xl font-bold mb-2 text-primary">Location</h3>
-                  <p className="text-gray-600">New Delhi, India</p>
-                  <p className="text-gray-600">Serving students nationwide</p>
+                  <h3 className="text-xl font-bold mb-2 text-primary">WhatsApp</h3>
+                  <a href="https://wa.me/918770012626" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 font-semibold">
+                    +91 8770012626
+                  </a>
+                  <p className="text-gray-600 text-sm mt-1">Mon-Sat: 9:00 AM - 8:00 PM</p>
                 </div>
               </div>
             </div>
@@ -619,6 +784,7 @@ export default function App() {
           <Navbar onAuthClick={() => setShowAuthModal(true)} />
           <Routes>
             <Route path="/" element={<LandingPage onAuthClick={() => setShowAuthModal(true)} />} />
+            <Route path="/sample-test" element={<SampleTestPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route
@@ -657,10 +823,13 @@ export default function App() {
 const AuthModal = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
+    name: '',
+    mobile_number: '',
     email: '',
+    password: '',
     class_level: '10',
+    school_name: '',
+    city: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -673,7 +842,7 @@ const AuthModal = ({ onClose }) => {
 
     try {
       if (isLogin) {
-        await login(formData.username, formData.password);
+        await login(formData.mobile_number, formData.password);
       } else {
         await register(formData);
       }
@@ -687,8 +856,8 @@ const AuthModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative my-8">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
@@ -698,9 +867,9 @@ const AuthModal = ({ onClose }) => {
         </button>
 
         <div className="text-center mb-6">
-          <img src={LOGO_URL} alt="Arpit Sir Maths" className="h-16 w-auto mx-auto mb-4" />
+          <img src={LOGO_URL} alt="Logo" className="h-16 w-auto mx-auto mb-4" />
           <h2 className="text-3xl font-bold text-primary">
-            {isLogin ? 'Welcome Back!' : 'Join Us Today!'}
+            {isLogin ? 'Welcome Back!' : 'Join Decode Maths!'}
           </h2>
         </div>
 
@@ -711,59 +880,100 @@ const AuthModal = ({ onClose }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Username</label>
-            <input
-              type="text"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              required
-              data-testid="username-input"
-            />
-          </div>
-
           {!isLogin && (
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Email</label>
+              <label className="block text-gray-700 font-semibold mb-2">Full Name *</label>
               <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 required
-                data-testid="email-input"
+                data-testid="name-input"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Password</label>
+            <label className="block text-gray-700 font-semibold mb-2">Mobile Number *</label>
+            <input
+              type="tel"
+              value={formData.mobile_number}
+              onChange={(e) => setFormData({ ...formData, mobile_number: e.target.value })}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              required
+              placeholder="10-digit mobile number"
+              pattern="[0-9]{10}"
+              data-testid="mobile-input"
+            />
+          </div>
+
+          {!isLogin && (
+            <>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Email *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                  data-testid="email-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Class *</label>
+                <select
+                  value={formData.class_level}
+                  onChange={(e) => setFormData({ ...formData, class_level: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  data-testid="class-select"
+                >
+                  <option value="10">Class 10</option>
+                  <option value="11">Class 11</option>
+                  <option value="12">Class 12</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">School Name *</label>
+                <input
+                  type="text"
+                  value={formData.school_name}
+                  onChange={(e) => setFormData({ ...formData, school_name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                  data-testid="school-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">City *</label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                  data-testid="city-input"
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">Password *</label>
             <input
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               required
+              minLength="6"
               data-testid="password-input"
             />
           </div>
-
-          {!isLogin && (
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Class</label>
-              <select
-                value={formData.class_level}
-                onChange={(e) => setFormData({ ...formData, class_level: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                data-testid="class-select"
-              >
-                <option value="10">Class 10</option>
-                <option value="11">Class 11</option>
-                <option value="12">Class 12</option>
-              </select>
-            </div>
-          )}
 
           <button
             type="submit"
@@ -824,9 +1034,9 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 text-primary">
-            Welcome back, {user.username}!
+            Welcome back, {user.name}!
           </h1>
-          <p className="text-gray-600">Continue your mathematics journey</p>
+          <p className="text-gray-600">Class {user.class_level} • {user.school_name}</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
