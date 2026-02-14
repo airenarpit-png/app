@@ -1154,13 +1154,386 @@ const PracticePage = () => {
   );
 };
 
-// Admin Panel Component (Placeholder)
+// Admin Panel Component
 const AdminPanel = () => {
+  const [activeTab, setActiveTab] = useState('questions');
+  const [questions, setQuestions] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [formData, setFormData] = useState({
+    chapter_id: '',
+    question_type: 'MCQ',
+    question_text: '',
+    options: ['', '', '', ''],
+    correct_answer: '',
+    marks: 1,
+    youtube_solution_url: '',
+    explanation: '',
+    special_note: ''
+  });
+
+  useEffect(() => {
+    fetchQuestions();
+    fetchChapters();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const response = await axios.get(`${API}/questions`);
+      setQuestions(response.data);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  };
+
+  const fetchChapters = async () => {
+    try {
+      const response = await axios.get(`${API}/chapters`);
+      setChapters(response.data);
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const payload = { ...formData };
+      // Clean options for non-MCQ questions
+      if (formData.question_type !== 'MCQ' && formData.question_type !== 'Assertion-Reason') {
+        payload.options = null;
+      }
+      
+      if (editingQuestion) {
+        await axios.put(`${API}/questions/${editingQuestion.question_id}`, payload);
+        alert('Question updated successfully!');
+      } else {
+        await axios.post(`${API}/questions`, payload);
+        alert('Question added successfully!');
+      }
+      
+      resetForm();
+      fetchQuestions();
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.detail || 'Failed to save question'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (question) => {
+    setEditingQuestion(question);
+    setFormData({
+      chapter_id: question.chapter_id,
+      question_type: question.question_type,
+      question_text: question.question_text,
+      options: question.options || ['', '', '', ''],
+      correct_answer: question.correct_answer,
+      marks: question.marks,
+      youtube_solution_url: question.youtube_solution_url || '',
+      explanation: question.explanation || '',
+      special_note: question.special_note || ''
+    });
+    setShowAddForm(true);
+  };
+
+  const handleDelete = async (questionId) => {
+    if (!window.confirm('Are you sure you want to delete this question?')) return;
+    
+    try {
+      await axios.delete(`${API}/questions/${questionId}`);
+      alert('Question deleted successfully!');
+      fetchQuestions();
+    } catch (error) {
+      alert('Error deleting question: ' + error.response?.data?.detail);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      chapter_id: '',
+      question_type: 'MCQ',
+      question_text: '',
+      options: ['', '', '', ''],
+      correct_answer: '',
+      marks: 1,
+      youtube_solution_url: '',
+      explanation: '',
+      special_note: ''
+    });
+    setEditingQuestion(null);
+    setShowAddForm(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-4xl font-bold mb-8 text-primary">Admin Panel - Coming Soon</h1>
-        <p className="text-gray-600">Manage questions, chapters, and users.</p>
+    <div className="min-h-screen bg-gray-50 pt-28 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold mb-8 text-primary">Admin Panel</h1>
+        
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow-lg mb-6">
+          <div className="flex border-b">
+            <button
+              onClick={() => setActiveTab('questions')}
+              className={`px-6 py-4 font-semibold transition ${
+                activeTab === 'questions'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-gray-600 hover:text-primary'
+              }`}
+            >
+              📝 Questions ({questions.length})
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'questions' && (
+          <>
+            {/* Add Question Button */}
+            {!showAddForm && (
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-bold hover:shadow-lg transition"
+                >
+                  + Add New Question
+                </button>
+              </div>
+            )}
+
+            {/* Add/Edit Question Form */}
+            {showAddForm && (
+              <div className="bg-white p-6 rounded-xl shadow-lg mb-6">
+                <h2 className="text-2xl font-bold mb-6 text-primary">
+                  {editingQuestion ? 'Edit Question' : 'Add New Question'}
+                </h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Chapter Selection */}
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">Chapter *</label>
+                    <select
+                      value={formData.chapter_id}
+                      onChange={(e) => setFormData({ ...formData, chapter_id: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    >
+                      <option value="">Select Chapter</option>
+                      {chapters.map((chapter) => (
+                        <option key={chapter.chapter_id} value={chapter.chapter_id}>
+                          Class {chapter.class_level} - {chapter.chapter_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* Question Type */}
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">Question Type *</label>
+                      <select
+                        value={formData.question_type}
+                        onChange={(e) => setFormData({ ...formData, question_type: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="MCQ">MCQ</option>
+                        <option value="Assertion-Reason">Assertion-Reason</option>
+                        <option value="2M">2 Marks (Subjective)</option>
+                        <option value="3M">3 Marks (Subjective)</option>
+                        <option value="5M">5 Marks (Subjective)</option>
+                        <option value="CaseStudy">Case Study</option>
+                      </select>
+                    </div>
+
+                    {/* Marks */}
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">Marks *</label>
+                      <input
+                        type="number"
+                        value={formData.marks}
+                        onChange={(e) => setFormData({ ...formData, marks: parseInt(e.target.value) })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        min="1"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Question Text */}
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">Question Text *</label>
+                    <textarea
+                      value={formData.question_text}
+                      onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      rows="4"
+                      required
+                    />
+                  </div>
+
+                  {/* Options (for MCQ and Assertion-Reason) */}
+                  {(formData.question_type === 'MCQ' || formData.question_type === 'Assertion-Reason') && (
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">Options *</label>
+                      {formData.options.map((option, index) => (
+                        <input
+                          key={index}
+                          type="text"
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...formData.options];
+                            newOptions[index] = e.target.value;
+                            setFormData({ ...formData, options: newOptions });
+                          }}
+                          placeholder={`Option ${index + 1}`}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary mb-2"
+                          required
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Correct Answer */}
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">Correct Answer *</label>
+                    <input
+                      type="text"
+                      value={formData.correct_answer}
+                      onChange={(e) => setFormData({ ...formData, correct_answer: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+
+                  {/* YouTube Solution URL */}
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">YouTube Solution Link (Optional)</label>
+                    <input
+                      type="url"
+                      value={formData.youtube_solution_url}
+                      onChange={(e) => setFormData({ ...formData, youtube_solution_url: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="https://youtube.com/..."
+                    />
+                  </div>
+
+                  {/* Explanation */}
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">Explanation</label>
+                    <textarea
+                      value={formData.explanation}
+                      onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      rows="3"
+                    />
+                  </div>
+
+                  {/* Special Note */}
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">Special Note (Optional)</label>
+                    <textarea
+                      value={formData.special_note}
+                      onChange={(e) => setFormData({ ...formData, special_note: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      rows="2"
+                      placeholder="Any special instructions or notes for this question"
+                    />
+                  </div>
+
+                  {/* Form Actions */}
+                  <div className="flex gap-4">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-bold hover:shadow-lg transition disabled:opacity-50"
+                    >
+                      {loading ? 'Saving...' : editingQuestion ? 'Update Question' : 'Add Question'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-400 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Questions List */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div className="px-6 py-4 bg-primary text-white">
+                <h2 className="text-xl font-bold">All Questions</h2>
+              </div>
+              <div className="divide-y divide-gray-200">
+                {questions.length === 0 ? (
+                  <p className="p-6 text-gray-600 text-center">No questions yet. Add your first question!</p>
+                ) : (
+                  questions.map((question, index) => {
+                    const chapter = chapters.find(c => c.chapter_id === question.chapter_id);
+                    return (
+                      <div key={question.question_id} className="p-6 hover:bg-gray-50 transition">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="px-3 py-1 bg-primary text-white rounded-full text-sm font-bold">
+                                #{index + 1}
+                              </span>
+                              <span className="px-3 py-1 bg-accent text-white rounded-full text-sm font-bold">
+                                {question.question_type}
+                              </span>
+                              <span className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-bold">
+                                {question.marks} marks
+                              </span>
+                              {chapter && (
+                                <span className="text-sm text-gray-600">
+                                  Class {chapter.class_level} - {chapter.chapter_name}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-800 font-medium mb-2">{question.question_text.substring(0, 150)}...</p>
+                            {question.special_note && (
+                              <p className="text-sm text-blue-600 mb-2">📌 {question.special_note}</p>
+                            )}
+                            <p className="text-sm text-gray-600">
+                              <span className="font-semibold">Answer:</span> {question.correct_answer}
+                            </p>
+                            {question.youtube_solution_url && (
+                              <a
+                                href={question.youtube_solution_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-red-600 hover:underline mt-1 inline-block"
+                              >
+                                🎥 View Solution
+                              </a>
+                            )}
+                          </div>
+                          <div className="flex gap-2 ml-4">
+                            <button
+                              onClick={() => handleEdit(question)}
+                              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-semibold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(question.question_id)}
+                              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-semibold"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
