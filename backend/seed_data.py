@@ -67,15 +67,6 @@ async def seed_database():
     }
     await db.users.insert_one(student_user)
     print("✅ Student created - Mobile: 9876543210, Password: student123")
-        "password_hash": hash_password("student123"),
-        "class_level": "10",
-        "school_name": "Delhi Public School",
-        "city": "Delhi",
-        "registration_date": datetime.now(timezone.utc).isoformat(),
-        "is_admin": False
-    }
-    await db.users.insert_one(student_user)
-    print("✅ Student created - Mobile: 9876543210, Password: student123")
     
     # Sample chapters for each class
     chapters_data = [
