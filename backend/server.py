@@ -439,6 +439,57 @@ async def get_sample_questions(class_level: Optional[str] = None, chapter_id: Op
         question["correct_answer_hidden"] = True
     
     return questions
+
+@api_router.get("/chapter-test/{chapter_id}")
+async def get_chapter_test(chapter_id: str, current_user: dict = Depends(get_current_user)):
+    """
+    Get chapter test for authenticated users with specific format:
+    - 5 MCQ
+    - 3 x 2M subjective
+    - 3 x 3M subjective
+    - 2 x 5M subjective
+    - 2 Case Study
+    Total: 15 questions
+    """
+    all_questions = []
+    
+    # Get 5 MCQ
+    mcq_query = {"chapter_id": chapter_id, "question_type": "MCQ"}
+    mcq_pipeline = [{"$match": mcq_query}, {"$sample": {"size": 5}}, {"$project": {"_id": 0}}]
+    mcq_questions = await db.questions.aggregate(mcq_pipeline).to_list(5)
+    all_questions.extend(mcq_questions)
+    
+    # Get 3 x 2M
+    two_marks_query = {"chapter_id": chapter_id, "question_type": "2M"}
+    two_marks_pipeline = [{"$match": two_marks_query}, {"$sample": {"size": 3}}, {"$project": {"_id": 0}}]
+    two_marks_questions = await db.questions.aggregate(two_marks_pipeline).to_list(3)
+    all_questions.extend(two_marks_questions)
+    
+    # Get 3 x 3M
+    three_marks_query = {"chapter_id": chapter_id, "question_type": "3M"}
+    three_marks_pipeline = [{"$match": three_marks_query}, {"$sample": {"size": 3}}, {"$project": {"_id": 0}}]
+    three_marks_questions = await db.questions.aggregate(three_marks_pipeline).to_list(3)
+    all_questions.extend(three_marks_questions)
+    
+    # Get 2 x 5M
+    five_marks_query = {"chapter_id": chapter_id, "question_type": "5M"}
+    five_marks_pipeline = [{"$match": five_marks_query}, {"$sample": {"size": 2}}, {"$project": {"_id": 0}}]
+    five_marks_questions = await db.questions.aggregate(five_marks_pipeline).to_list(2)
+    all_questions.extend(five_marks_questions)
+    
+    # Get 2 Case Study
+    case_study_query = {"chapter_id": chapter_id, "question_type": "CaseStudy"}
+    case_study_pipeline = [{"$match": case_study_query}, {"$sample": {"size": 2}}, {"$project": {"_id": 0}}]
+    case_study_questions = await db.questions.aggregate(case_study_pipeline).to_list(2)
+    all_questions.extend(case_study_questions)
+    
+    return all_questions
+
+@api_router.get("/chapter-practice/{chapter_id}")
+async def get_chapter_practice(chapter_id: str, current_user: dict = Depends(get_current_user)):
+    """Get all questions for chapter practice (authenticated users)"""
+    questions = await db.questions.find({"chapter_id": chapter_id}, {"_id": 0}).to_list(1000)
+    return questions
     for question in questions:
         question["correct_answer_hidden"] = True
     
