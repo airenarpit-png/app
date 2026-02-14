@@ -263,6 +263,22 @@ async def seed_database():
         {
             "question_id": str(uuid.uuid4()),
             "chapter_id": class10_polynomials_id,
+            "question_type": "Assertion-Reason",
+            "question_text": "Assertion (A): The graph of a quadratic polynomial is always a parabola.\nReason (R): A quadratic polynomial has degree 2.",
+            "options": [
+                "Both A and R are true and R is the correct explanation of A",
+                "Both A and R are true but R is not the correct explanation of A",
+                "A is true but R is false",
+                "A is false but R is true"
+            ],
+            "correct_answer": "Both A and R are true and R is the correct explanation of A",
+            "marks": 1,
+            "youtube_solution_url": "",
+            "explanation": "A quadratic polynomial (degree 2) always has a parabolic graph. The degree determines the shape."
+        },
+        {
+            "question_id": str(uuid.uuid4()),
+            "chapter_id": class10_polynomials_id,
             "question_type": "2M",
             "question_text": "Find the zeroes of the quadratic polynomial x² + 7x + 10, and verify the relationship between the zeroes and the coefficients.",
             "options": None,
