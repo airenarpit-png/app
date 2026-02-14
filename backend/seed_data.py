@@ -32,27 +32,41 @@ async def seed_database():
     await db.questions.delete_many({})
     await db.chapter_videos.delete_many({})
     await db.test_attempts.delete_many({})
+    await db.question_reports.delete_many({})
     
     # Create admin user
     print("👤 Creating admin user...")
     admin_user = {
         "user_id": str(uuid.uuid4()),
-        "username": "admin",
+        "name": "Admin",
+        "mobile_number": "9999999999",
         "email": "admin@decodemathsnow.com",
         "password_hash": hash_password("admin123"),
         "class_level": "10",
+        "school_name": "Decode Maths",
+        "city": "Delhi",
         "registration_date": datetime.now(timezone.utc).isoformat(),
         "is_admin": True
     }
     await db.users.insert_one(admin_user)
-    print("✅ Admin created - Username: admin, Password: admin123")
+    print("✅ Admin created - Mobile: 9999999999, Password: admin123")
     
     # Create sample student user
     print("👤 Creating sample student user...")
     student_user = {
         "user_id": str(uuid.uuid4()),
-        "username": "student1",
-        "email": "student1@example.com",
+        "name": "Rahul Kumar",
+        "mobile_number": "9876543210",
+        "email": "rahul@example.com",
+        "password_hash": hash_password("student123"),
+        "class_level": "10",
+        "school_name": "Delhi Public School",
+        "city": "Delhi",
+        "registration_date": datetime.now(timezone.utc).isoformat(),
+        "is_admin": False
+    }
+    await db.users.insert_one(student_user)
+    print("✅ Student created - Mobile: 9876543210, Password: student123")
         "password_hash": hash_password("student123"),
         "class_level": "10",
         "registration_date": datetime.now(timezone.utc).isoformat(),
