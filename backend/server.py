@@ -391,6 +391,80 @@ async def delete_question(question_id: str):
         raise HTTPException(status_code=404, detail="Question not found")
     return {"message": "Question deleted"}
 
+# ============= SAMPLE QUESTIONS (PUBLIC) =============
+
+@api_router.get("/sample-questions")
+async def get_sample_questions(class_level: Optional[str] = None):
+    """Get 10 random sample questions for guest users (no authentication required)"""
+    query = {}
+    if class_level:
+        # Get chapters for this class
+        chapters = await db.chapters.find({"class_level": class_level}, {"_id": 0}).to_list(100)
+        if chapters:
+            chapter_ids = [ch["chapter_id"] for ch in chapters]
+            query["chapter_id"] = {"$in": chapter_ids}
+    
+    # Get random 10 questions
+    pipeline = [
+        {"$match": query},
+        {"$sample": {"size": 10}},
+        {"$project": {"_id": 0}}
+    ]
+    
+    questions = await db.questions.aggregate(pipeline).to_list(10)
+    
+    # Remove correct answers for sample questions (show only after submission)
+    for question in questions:
+        question["correct_answer_hidden"] = True
+    
+    return questions
+
+# ============= QUESTION REPORT ROUTES =============
+
+@api_router.post("/questions/{question_id}/report")
+async def report_question(
+    question_id: str,
+    report_data: QuestionReportCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    # Verify question exists
+    question = await db.questions.find_one({"question_id": question_id})
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    
+    # Create report
+    report = QuestionReport(
+        question_id=question_id,
+        user_id=current_user["user_id"],
+        report_reason=report_data.report_reason,
+        description=report_data.description,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        status="pending"
+    )
+    
+    await db.question_reports.insert_one(report.model_dump())
+    
+    return {"message": "Report submitted successfully", "report_id": report.report_id}
+
+@api_router.get("/admin/question-reports", dependencies=[Depends(get_current_admin)])
+async def get_question_reports(status: Optional[str] = None):
+    query = {}
+    if status:
+        query["status"] = status
+    
+    reports = await db.question_reports.find(query, {"_id": 0}).sort("timestamp", -1).to_list(1000)
+    return reports
+
+@api_router.put("/admin/question-reports/{report_id}", dependencies=[Depends(get_current_admin)])
+async def update_report_status(report_id: str, status: str):
+    result = await db.question_reports.update_one(
+        {"report_id": report_id},
+        {"$set": {"status": status}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return {"message": "Report status updated"}
+
 # ============= CHAPTER VIDEO ROUTES =============
 
 @api_router.get("/chapter-videos")
