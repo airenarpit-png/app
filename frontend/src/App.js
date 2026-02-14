@@ -171,6 +171,9 @@ const Navbar = ({ onAuthClick }) => {
             <a href="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition">
               Free Sample Test
             </a>
+            <a href="/pricing" className="text-gray-700 hover:text-primary font-semibold transition">
+              Pricing
+            </a>
             <a href="/about" className="text-gray-700 hover:text-primary font-semibold transition">
               About
             </a>
