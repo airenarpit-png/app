@@ -321,11 +321,11 @@ const LandingPage = ({ onAuthClick }) => {
             >
               Start Learning Free
             </button>
-            <Link="/sample-test"
+            <a href="/sample-test"
               className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white hover:text-primary transition"
             >
               Try Sample Test
-            </Link>
+            </a>
           </div>
         </div>
       </section>
