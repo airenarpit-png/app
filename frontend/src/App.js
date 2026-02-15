@@ -321,12 +321,11 @@ const LandingPage = ({ onAuthClick }) => {
             >
               Start Learning Free
             </button>
-            <a
-              href="/sample-test"
+            <Link="/sample-test"
               className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white hover:text-primary transition"
             >
               Try Sample Test
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -1241,6 +1240,8 @@ export default function App() {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/practice" element={<PracticePage />} />
+            <Route path="/admin" element={<AdminPanel />} />
             <Route
               path="/dashboard"
               element={
