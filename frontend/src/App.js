@@ -161,37 +161,37 @@ const Navbar = ({ onAuthClick }) => {
         <div className="flex justify-between items-center h-20">
           <Link to="/" className="flex items-center space-x-3">
             <img src={LOGO_URL} alt="Decode Maths Logo" className="h-14 w-auto" />
-          </a>
+          </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/" className="text-gray-700 hover:text-primary font-semibold transition">
               Home
-            </a>
+            </Link>
             <Link to="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition">
               Free Sample Test
-            </a>
+            </Link>
             <Link to="/pricing" className="text-gray-700 hover:text-primary font-semibold transition">
               Pricing
-            </a>
+            </Link>
             <Link to="/about" className="text-gray-700 hover:text-primary font-semibold transition">
               About
-            </a>
+            </Link>
             <Link to="/contact" className="text-gray-700 hover:text-primary font-semibold transition">
               Contact
-            </a>
+            </Link>
             {user && (
               <>
                 <Link to="/dashboard" className="text-gray-700 hover:text-primary font-semibold transition">
                   Dashboard
-                </a>
+                </Link>
                 <Link to="/practice" className="text-gray-700 hover:text-primary font-semibold transition">
                   Practice
-                </a>
+                </Link>
                 {user?.is_admin && (
                   <Link to="/admin" className="text-gray-700 hover:text-primary font-semibold transition">
                     Admin
-                  </a>
+                  </Link>
                 )}
               </>
             )}
@@ -242,27 +242,27 @@ const Navbar = ({ onAuthClick }) => {
             <div className="flex flex-col space-y-3">
               <Link to="/" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Home
-              </a>
+              </Link>
               <Link to="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Free Sample Test
-              </a>
+              </Link>
               <Link to="/pricing" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Pricing
-              </a>
+              </Link>
               <Link to="/about" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 About
-              </a>
+              </Link>
               <Link to="/contact" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Contact
-              </a>
+              </Link>
               {user && (
                 <>
                   <Link to="/dashboard" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                     Dashboard
-                  </a>
+                  </Link>
                   <Link to="/practice" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                     Practice
-                  </a>
+                  </Link>
                 </>
               )}
               {user ? (
@@ -326,7 +326,7 @@ const LandingPage = ({ onAuthClick }) => {
               className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white hover:text-primary transition"
             >
               Try Sample Test
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -412,9 +412,9 @@ const LandingPage = ({ onAuthClick }) => {
             Decode Maths - Master CBSE Mathematics with Expert Guidance
           </p>
           <div className="flex justify-center space-x-6 mb-4">
-            <Link to="/about" className="text-gray-300 hover:text-accent transition">About</a>
-            <Link to="/contact" className="text-gray-300 hover:text-accent transition">Contact</a>
-            <Link to="/sample-test" className="text-gray-300 hover:text-accent transition">Sample Test</a>
+            <Link to="/about" className="text-gray-300 hover:text-accent transition">About</Link>
+            <Link to="/contact" className="text-gray-300 hover:text-accent transition">Contact</Link>
+            <Link to="/sample-test" className="text-gray-300 hover:text-accent transition">Sample Test</Link>
           </div>
           <p className="text-gray-400 text-sm">
             © 2024 Decode Maths. All rights reserved.
@@ -537,7 +537,7 @@ const SampleTestPage = () => {
             <p className="text-sm mb-3">Login or Sign up to access complete chapter-wise practice with video solutions!</p>
             <Link to="/" className="inline-block px-6 py-2 bg-white text-accent rounded-lg font-bold hover:shadow-lg transition">
               Login / Sign Up Now
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -553,7 +553,7 @@ const SampleTestPage = () => {
                 <p className="text-lg">Great job! Sign up to access more questions and track your progress.</p>
                 <Link to="/" className="inline-block mt-4 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
                   Sign Up Now
-                </a>
+                </Link>
               </div>
             )}
 
@@ -829,7 +829,7 @@ const ContactPage = () => {
                   <h3 className="text-xl font-bold mb-2 text-primary">WhatsApp</h3>
                   <Link to="https://wa.me/918770012626" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 font-semibold">
                     +91 8770012626
-                  </a>
+                  </Link>
                   <p className="text-gray-600 text-sm mt-1">Mon-Sat: 9:00 AM - 8:00 PM</p>
                 </div>
               </div>
