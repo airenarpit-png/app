@@ -242,7 +242,7 @@ const Navbar = ({ onAuthClick }) => {
             <div className="flex flex-col space-y-3">
               <Link to="/" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Home
-              </a>
+              </Link>
               <Link to="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Free Sample Test
               </Link>
