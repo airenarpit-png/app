@@ -1,8 +1,8 @@
 {
   "name": "frontend",
-  "homepage": "https://airenarpit-png.github.io/app",
   "version": "0.1.0",
   "private": true,
+    "homepage": "https://airenarpit-png.github.io/app",
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-accordion": "^1.2.8",
