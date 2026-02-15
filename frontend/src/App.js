@@ -5,7 +5,7 @@ import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://decodemathsnow.onrender.com";
 const API = `${BACKEND_URL}/api`;
-const LOGO_URL = '/Logo.png';
+const LOGO_URL = 'https://customer-assets.emergentagent.com/job_math-decoder/artifacts/l8340fyy_Logo.png';
 
 // Create Auth Context
 const AuthContext = createContext(null);
