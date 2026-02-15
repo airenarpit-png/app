@@ -25,8 +25,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          
-           - name: Install dependencies
+
+      - name: Install dependencies (ignore peer deps)
         run: |
           npm config set legacy-peer-deps true
           npm install
