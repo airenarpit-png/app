@@ -242,7 +242,7 @@ const Navbar = ({ onAuthClick }) => {
             <div className="flex flex-col space-y-3">
               <Link to="/" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Home
-              </Link>
+              </a>
               <Link to="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Free Sample Test
               </Link>
@@ -326,7 +326,7 @@ const LandingPage = ({ onAuthClick }) => {
               className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white hover:text-primary transition"
             >
               Try Sample Test
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -827,9 +827,9 @@ const ContactPage = () => {
                 <div className="text-4xl">💬</div>
                 <div>
                   <h3 className="text-xl font-bold mb-2 text-primary">WhatsApp</h3>
-                  <Link to="https://wa.me/918770012626" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 font-semibold">
+                  <a href="https://wa.me/918770012626" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 font-semibold">
                     +91 8770012626
-                  </Link>
+                  </a>
                   <p className="text-gray-600 text-sm mt-1">Mon-Sat: 9:00 AM - 8:00 PM</p>
                 </div>
               </div>
