@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './App.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://decodemathsnow.onrender.com";
 const API = `${BACKEND_URL}/api`;
 const LOGO_URL = '/Logo.png';
 
@@ -240,27 +240,27 @@ const Navbar = ({ onAuthClick }) => {
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-3">
-              <Link to="/" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Home
               </Link>
-              <Link to="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/sample-test" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Free Sample Test
               </Link>
-              <Link to="/pricing" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Pricing
               </Link>
-              <Link to="/about" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 About
               </Link>
-              <Link to="/contact" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Contact
               </Link>
               {user && (
                 <>
-                  <Link to="/dashboard" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+                  <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                     Dashboard
                   </Link>
-                  <Link to="/practice" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+                  <Link to="/practice" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                     Practice
                   </Link>
                 </>
