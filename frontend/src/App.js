@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './App.css';
 
@@ -159,37 +159,37 @@ const Navbar = ({ onAuthClick }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <a href="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3">
             <img src={LOGO_URL} alt="Decode Maths Logo" className="h-14 w-auto" />
           </a>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="/" className="text-gray-700 hover:text-primary font-semibold transition">
+            <Link to="/" className="text-gray-700 hover:text-primary font-semibold transition">
               Home
             </a>
-            <a href="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition">
+            <Link to="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition">
               Free Sample Test
             </a>
-            <a href="/pricing" className="text-gray-700 hover:text-primary font-semibold transition">
+            <Link to="/pricing" className="text-gray-700 hover:text-primary font-semibold transition">
               Pricing
             </a>
-            <a href="/about" className="text-gray-700 hover:text-primary font-semibold transition">
+            <Link to="/about" className="text-gray-700 hover:text-primary font-semibold transition">
               About
             </a>
-            <a href="/contact" className="text-gray-700 hover:text-primary font-semibold transition">
+            <Link to="/contact" className="text-gray-700 hover:text-primary font-semibold transition">
               Contact
             </a>
             {user && (
               <>
-                <a href="/dashboard" className="text-gray-700 hover:text-primary font-semibold transition">
+                <Link to="/dashboard" className="text-gray-700 hover:text-primary font-semibold transition">
                   Dashboard
                 </a>
-                <a href="/practice" className="text-gray-700 hover:text-primary font-semibold transition">
+                <Link to="/practice" className="text-gray-700 hover:text-primary font-semibold transition">
                   Practice
                 </a>
                 {user?.is_admin && (
-                  <a href="/admin" className="text-gray-700 hover:text-primary font-semibold transition">
+                  <Link to="/admin" className="text-gray-700 hover:text-primary font-semibold transition">
                     Admin
                   </a>
                 )}
@@ -240,27 +240,27 @@ const Navbar = ({ onAuthClick }) => {
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-3">
-              <a href="/" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Home
               </a>
-              <a href="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/sample-test" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Free Sample Test
               </a>
-              <a href="/pricing" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/pricing" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Pricing
               </a>
-              <a href="/about" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/about" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 About
               </a>
-              <a href="/contact" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+              <Link to="/contact" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                 Contact
               </a>
               {user && (
                 <>
-                  <a href="/dashboard" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+                  <Link to="/dashboard" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                     Dashboard
                   </a>
-                  <a href="/practice" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
+                  <Link to="/practice" className="text-gray-700 hover:text-primary font-semibold transition px-4 py-2">
                     Practice
                   </a>
                 </>
@@ -412,9 +412,9 @@ const LandingPage = ({ onAuthClick }) => {
             Decode Maths - Master CBSE Mathematics with Expert Guidance
           </p>
           <div className="flex justify-center space-x-6 mb-4">
-            <a href="/about" className="text-gray-300 hover:text-accent transition">About</a>
-            <a href="/contact" className="text-gray-300 hover:text-accent transition">Contact</a>
-            <a href="/sample-test" className="text-gray-300 hover:text-accent transition">Sample Test</a>
+            <Link to="/about" className="text-gray-300 hover:text-accent transition">About</a>
+            <Link to="/contact" className="text-gray-300 hover:text-accent transition">Contact</a>
+            <Link to="/sample-test" className="text-gray-300 hover:text-accent transition">Sample Test</a>
           </div>
           <p className="text-gray-400 text-sm">
             © 2024 Decode Maths. All rights reserved.
@@ -535,7 +535,7 @@ const SampleTestPage = () => {
           <div className="bg-gradient-to-r from-accent to-orange-600 text-white p-4 rounded-lg mb-6 max-w-2xl mx-auto">
             <p className="font-bold text-lg mb-2">🎓 Want More Practice Questions?</p>
             <p className="text-sm mb-3">Login or Sign up to access complete chapter-wise practice with video solutions!</p>
-            <a href="/" className="inline-block px-6 py-2 bg-white text-accent rounded-lg font-bold hover:shadow-lg transition">
+            <Link to="/" className="inline-block px-6 py-2 bg-white text-accent rounded-lg font-bold hover:shadow-lg transition">
               Login / Sign Up Now
             </a>
           </div>
@@ -551,7 +551,7 @@ const SampleTestPage = () => {
               <div className="bg-green-100 border-2 border-green-500 text-green-800 p-6 rounded-xl mb-6 text-center">
                 <div className="text-3xl font-bold mb-2">Score: {score} / {questions.length}</div>
                 <p className="text-lg">Great job! Sign up to access more questions and track your progress.</p>
-                <a href="/" className="inline-block mt-4 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
+                <Link to="/" className="inline-block mt-4 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
                   Sign Up Now
                 </a>
               </div>
@@ -827,7 +827,7 @@ const ContactPage = () => {
                 <div className="text-4xl">💬</div>
                 <div>
                   <h3 className="text-xl font-bold mb-2 text-primary">WhatsApp</h3>
-                  <a href="https://wa.me/918770012626" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 font-semibold">
+                  <Link to="https://wa.me/918770012626" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 font-semibold">
                     +91 8770012626
                   </a>
                   <p className="text-gray-600 text-sm mt-1">Mon-Sat: 9:00 AM - 8:00 PM</p>
@@ -1232,7 +1232,7 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/app">
         <div className="App">
           <Navbar onAuthClick={() => setShowAuthModal(true)} />
           <Routes>
