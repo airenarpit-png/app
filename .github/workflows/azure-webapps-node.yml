@@ -1,4 +1,4 @@
-name: Deploy static site to GitHub Pages
+name: Deploy React App to GitHub Pages
 
 on:
   push:
@@ -10,11 +10,11 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-        steps:
-      - name: Checkout
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node
@@ -32,13 +32,13 @@ jobs:
           cd frontend
           npm run build
 
-      - name: Setup Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload build
+      - name: Upload build folder
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./frontend/build
 
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
